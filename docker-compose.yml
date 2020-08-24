@@ -1,0 +1,16 @@
+version: '3'
+services:
+  web:
+    build: .
+    command: 'nginx -p /feasyberries/ -c conf/nginx.conf'
+    volumes:
+      - './openresty:/feasyberries'
+      # - .:/feasyberries
+      # - './conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'  #   depends_on:
+    ports:
+      - '8080:8080'
+    working_dir: '/feasyberries'
+  #   depends_on:
+  #     - redis
+  # redis:
+  #   image: 'redis:alpine'

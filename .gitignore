@@ -1,2 +1,3 @@
 openresty/logs
 openresty/*_temp/
+.DS_Store

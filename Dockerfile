@@ -5,6 +5,10 @@ RUN groupadd --gid 1000 node \
 
 ENV NODE_VERSION 14.8.0
 
+ADD "https://raw.githubusercontent.com/ledgetech/lua-resty-http/v0.14/lib/resty/http.lua" /usr/local/openresty/lualib/resty/http.lua
+ADD "https://raw.githubusercontent.com/ledgetech/lua-resty-http/v0.14/lib/resty/http_headers.lua" /usr/local/openresty/lualib/resty/http_headers.lua
+RUN chmod +rx /usr/local/openresty/lualib/resty/http.lua /usr/local/openresty/lualib/resty/http_headers.lua
+
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && case "${dpkgArch##*-}" in \
       amd64) ARCH='x64';; \
@@ -59,7 +63,7 @@ ENV YARN_VERSION 1.22.4
 
 RUN set -ex \
   && savedAptMark="$(apt-mark showmanual)" \
-  && apt-get update && apt-get install -y ca-certificates curl wget gnupg dirmngr --no-install-recommends \
+  && apt-get update && apt-get install -y ca-certificates curl wget git-all gnupg dirmngr --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* \
   && for key in \
     6A010C5166006599AA17F08146C2130DFD2497F5 \

@@ -98,3 +98,4 @@ RUN set -ex \
   && export PATH
 
 EXPOSE 8080
+EXPOSE 35729

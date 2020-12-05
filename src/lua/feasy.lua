@@ -16,7 +16,8 @@ local seconds_to_expire = 120 -- 2 minutes
 -- Json library
 local json = require "cjson"
 
-local root_url = "https://orca.bcferries.com/cc/marqui/"
+-- local root_url = "https://orca.bcferries.com/cc/marqui/"
+local root_url = "https://www.bcferries.com"
 
 local function redis_connect()
   local i = 0
@@ -57,25 +58,13 @@ end
 
 local function set_cache(key, value)
   ngx.log(ngx.ERR, "Updating cache")
-
-  local ok, error = redis:set(key, value)
+  local value_as_json = json.encode(value)
+  local ok, error = redis:set(key, value_as_json)
   if not ok then
     ngx.log(ngx.ERR, "REDIS: Error setting " .. key .. " : " .. error)
     return false
   end
-
-  local time_now = os.time()
-
-  local seconds_to_expire = 120 -- 2 minutes
-  local time_now = os.time()
-  local expires_at = time_now + seconds_to_expire
-
-  local expiry_key = key .. '_expires'
-  local ok, error = redis:set(expiry_key, expires_at)
-  if not ok then
-    ngx.log(ngx.ERR, "REDIS: Error setting " .. expiry_key .. " : " .. error)
-    return false
-  end
+  ngx.log(ngx.ERR, "Cache succesfully updated")
   return true
 end
 
@@ -83,69 +72,93 @@ local function get_cache(key)
   ngx.log(ngx.ERR, "Retrieving cache for " .. key)
 
   local cache, error = redis:get(key)
-  if not cache then
-    ngx.log(ngx.ERR, "REDIS: Couldn't retrieve " .. key .. " : " .. error)
+  if not cache or cache == ngx.null then
+    if error then
+      ngx.log(ngx.ERR, "REDIS: Couldn't retrieve " .. key .. " : " .. error)
+    else
+      ngx.log(ngx.ERR, "REDIS: Couldn't retrieve " .. key)
+    end
     return false
   end
-  local expiry_key = key .. '_expires'
+  ngx.log(ngx.ERR, "Found in cache, converting back into Lua object...")
+  local cache_as_json_string = tostring(cache)
+  local cache_as_table = json.decode(cache_as_json_string)
+  ngx.log(ngx.ERR, tostring(cache_as_table.expires))
+  ngx.log(ngx.ERR, "Successfully converted cache object, returning...")
+  return cache_as_table
+end
 
-  local expiry, error = redis:get(expiry_key)
-  if error then
-    ngx.log(ngx.ERR, "REDIS: Error retrieving key: " .. expiry_key .. " : " .. error)
+local function cache_is_expired(cache_entry)
+  -- ngx.log(ngx.ERR, "Compare time_now:" .. time_now .. " with cache_entry.expires:" .. tostring(cache_entry.expires))
+  if ngx.null == cache_entry.expires then
+    ngx.log(ngx.ERR, "Cache entry null")
     return false
   end
-
-  if not expiry or expiry == ngx.null then
-    ngx.log(ngx.ERR, "REDIS: No value found for: " .. expiry_key)
-    return false
+  if time_now < tonumber(cache_entry.expires) then
+    ngx.log(ngx.ERR, "Cache expiry is valid, still fresh")
+    return true
   end
-  expiry = tonumber(expiry)
-  local time_now = os.time()
-  if time_now > expiry then
-    ngx.log(ngx.ERR, "REDIS: Cache expired for " .. key)
-    return false
-  end
-  ngx.log(ngx.ERR, "Found in cache, returning...")
-  return cache
+  ngx.log(ngx.ERR, "Cache has expired")
+  return false
 end
 
 local function get_page(page_name)
   -- ngx.log(ngx.ERR, "GET_PAGE(" .. page_name ..")")
   local page_result
   local page_cache = get_cache(page_name)
-  if not page_cache then
+  if not page_cache or not cache_is_expired(page_cache) then
+    -- cache no good, go get the page again
     local net_page = net_request_page(root_url .. page_name)
     if not net_page then
       local json_response = json.encode({
         error = "Couldn't request data from host"
       })
+      ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
+      ngx.header['Retry-After'] = 1
       ngx.say(json_response)
       return
     end
-    local result = set_cache(page_name, net_page)
-    page_result = net_page
+    local time_now = os.time()
+    local expires_at = time_now + seconds_to_expire
+    -- ngx.log(ngx.ERR, "Save to cache with expiry date:" .. tostring(expires_at))
+    local cache_entry = {
+      page = net_page,
+      expires = expires_at
+    }
+
+    local result = set_cache(page_name, cache_entry)
+    page_result = cache_entry
   else
+    ngx.log(ngx.ERR, "Returning cached result...")
     page_result = page_cache
   end
-
-  local json_response = json.encode({
-    data = page_result
-  })
+  ngx.header['expires'] = ngx.http_time(tonumber(page_result.expires))
   ngx.status = ngx.HTTP_OK
-  ngx.say(json_response)
+  ngx.say(json.encode({page = page_result.page}))
   return
 end
 
 local redis_success = redis_connect()
 if not redis_success then
-  ngx.log(ngx.ERR, "What am I supposed to do without redis?")
+  ngx.log(ngx.ERR, "Error connecting to redis.")
+  ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
+  ngx.header['Retry-After'] = 1
+  ngx.say(json.encode({error = "Error connecting to redis."}))
   return
 end
-local request_uri = ngx.var.request_uri
+
+-- sub(5) to trim '/api' from the beginning of the uri
+local request_uri = ngx.var.request_uri:sub(5)
+
 local page_lookup = {
-  ["/port"] = "at-a-glance.asp",
-  ["/boat"] = "actualDepartures.asp"
+  ["/small"] = "/cc-route-info",
+  ["/big"] = "/route-info"
 }
+
 local page_to_request = page_lookup[request_uri]
+
+if page_to_request == nil then
+  page_to_request = request_uri
+end
 
 local response = get_page(page_to_request)

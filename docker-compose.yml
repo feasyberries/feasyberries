@@ -2,7 +2,7 @@ version: '3'
 services:
   web:
     build: .
-    command: 'nginx -p /feasyberries/ -c conf/nginx.conf'
+    command: 'nginx -p /feasyberries/ -c nginx.conf'
     volumes:
       - '.:/feasyberries'
       - node_modules:/feasyberries/node_modules

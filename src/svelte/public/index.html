@@ -11,9 +11,23 @@
   <link rel='stylesheet' href='/build/bundle.css'>
 
   <script defer src='/build/bundle.js'></script>
-
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Crete+Round&family=Permanent+Marker&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <script src="http://files.keyes.ie/things/baseliner/baseliner-latest.min.js">
+  </script>
+  <style>
+    @font-face {
+      font-family: 'lcd-clock';
+      font-style: normal;
+      font-weight: 400;
+      src: url('/lcd-clock.ttf');
+    }
+  </style>
+  <script>
+    window.onload = function() {
+        baseliner = new Baseliner();
+    }
+  </script>
 </head>
 
 <body>

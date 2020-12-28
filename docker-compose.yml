@@ -8,7 +8,6 @@ services:
       - node_modules:/feasyberries/node_modules
     ports:
       - '8080:8080'
-      - '35729:35729'
     working_dir: '/feasyberries'
     environment:
       - REDIS_URL=redis
@@ -21,6 +20,8 @@ services:
     volumes:
       - '.:/feasyberries'
       - 'svelte_node_modules:/feasyberries/src/svelte/node_modules'
+    ports:
+      - '35729:35729'
   redis:
     image: "redis:alpine"
     command: redis-server

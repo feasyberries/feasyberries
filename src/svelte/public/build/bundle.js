@@ -4,6 +4,9 @@ var app = (function () {
     'use strict';
 
     function noop() { }
+    function is_promise(value) {
+        return value && typeof value === 'object' && typeof value.then === 'function';
+    }
     function add_location(element, file, line, column, char) {
         element.__svelte_meta = {
             loc: { file, line, column, char }
@@ -26,6 +29,21 @@ var app = (function () {
     }
     function is_empty(obj) {
         return Object.keys(obj).length === 0;
+    }
+    function validate_store(store, name) {
+        if (store != null && typeof store.subscribe !== 'function') {
+            throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+        }
+    }
+    function subscribe(store, ...callbacks) {
+        if (store == null) {
+            return noop;
+        }
+        const unsub = store.subscribe(...callbacks);
+        return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+    }
+    function component_subscribe(component, store, callback) {
+        component.$$.on_destroy.push(subscribe(store, callback));
     }
 
     function append(target, node) {
@@ -65,6 +83,9 @@ var app = (function () {
     function children(element) {
         return Array.from(element.childNodes);
     }
+    function set_style(node, key, value, important) {
+        node.style.setProperty(key, value, important ? 'important' : '');
+    }
     function toggle_class(element, name, toggle) {
         element.classList[toggle ? 'add' : 'remove'](name);
     }
@@ -82,9 +103,6 @@ var app = (function () {
         if (!current_component)
             throw new Error(`Function called outside component initialization`);
         return current_component;
-    }
-    function onMount(fn) {
-        get_current_component().$$.on_mount.push(fn);
     }
     function createEventDispatcher() {
         const component = get_current_component();
@@ -124,9 +142,6 @@ var app = (function () {
     }
     function add_render_callback(fn) {
         render_callbacks.push(fn);
-    }
-    function add_flush_callback(fn) {
-        flush_callbacks.push(fn);
     }
     let flushing = false;
     const seen_callbacks = new Set();
@@ -213,19 +228,77 @@ var app = (function () {
         }
     }
 
+    function handle_promise(promise, info) {
+        const token = info.token = {};
+        function update(type, index, key, value) {
+            if (info.token !== token)
+                return;
+            info.resolved = value;
+            let child_ctx = info.ctx;
+            if (key !== undefined) {
+                child_ctx = child_ctx.slice();
+                child_ctx[key] = value;
+            }
+            const block = type && (info.current = type)(child_ctx);
+            let needs_flush = false;
+            if (info.block) {
+                if (info.blocks) {
+                    info.blocks.forEach((block, i) => {
+                        if (i !== index && block) {
+                            group_outros();
+                            transition_out(block, 1, 1, () => {
+                                info.blocks[i] = null;
+                            });
+                            check_outros();
+                        }
+                    });
+                }
+                else {
+                    info.block.d(1);
+                }
+                block.c();
+                transition_in(block, 1);
+                block.m(info.mount(), info.anchor);
+                needs_flush = true;
+            }
+            info.block = block;
+            if (info.blocks)
+                info.blocks[index] = block;
+            if (needs_flush) {
+                flush();
+            }
+        }
+        if (is_promise(promise)) {
+            const current_component = get_current_component();
+            promise.then(value => {
+                set_current_component(current_component);
+                update(info.then, 1, info.value, value);
+                set_current_component(null);
+            }, error => {
+                set_current_component(current_component);
+                update(info.catch, 2, info.error, error);
+                set_current_component(null);
+            });
+            // if we previously had a then/catch block, destroy it
+            if (info.current !== info.pending) {
+                update(info.pending, 0);
+                return true;
+            }
+        }
+        else {
+            if (info.current !== info.then) {
+                update(info.then, 1, info.value, promise);
+                return true;
+            }
+            info.resolved = promise;
+        }
+    }
+
     const globals = (typeof window !== 'undefined'
         ? window
         : typeof globalThis !== 'undefined'
             ? globalThis
             : global);
-
-    function bind(component, name, callback) {
-        const index = component.$$.props[name];
-        if (index !== undefined) {
-            component.$$.bound[index] = callback;
-            callback(component.$$.ctx[index]);
-        }
-    }
     function create_component(block) {
         block && block.c();
     }
@@ -509,8 +582,8 @@ var app = (function () {
     	}
     }
 
-    /* src/PortMapView.svelte generated by Svelte v3.24.1 */
-    const file$1 = "src/PortMapView.svelte";
+    /* src/PortListItem.svelte generated by Svelte v3.24.1 */
+    const file$1 = "src/PortListItem.svelte";
 
     function create_fragment$1(ctx) {
     	let li;
@@ -539,19 +612,19 @@ var app = (function () {
     			t3 = space();
     			span2 = element("span");
     			span2.textContent = `${/*portTown*/ ctx[2]}`;
-    			attr_dev(span0, "class", "portCode svelte-v29uk8");
-    			add_location(span0, file$1, 68, 4, 1470);
-    			attr_dev(div0, "class", "portCodeIcon svelte-v29uk8");
-    			add_location(div0, file$1, 67, 2, 1439);
-    			attr_dev(span1, "class", "portName svelte-v29uk8");
-    			add_location(span1, file$1, 71, 4, 1553);
-    			attr_dev(span2, "class", "portTown svelte-v29uk8");
-    			add_location(span2, file$1, 72, 4, 1598);
-    			attr_dev(div1, "class", "portDetails svelte-v29uk8");
-    			add_location(div1, file$1, 70, 2, 1523);
-    			attr_dev(li, "class", "svelte-v29uk8");
+    			attr_dev(span0, "class", "portCode svelte-1kqf2go");
+    			add_location(span0, file$1, 68, 4, 1509);
+    			attr_dev(div0, "class", "portCodeIcon svelte-1kqf2go");
+    			add_location(div0, file$1, 67, 2, 1478);
+    			attr_dev(span1, "class", "portName svelte-1kqf2go");
+    			add_location(span1, file$1, 71, 4, 1592);
+    			attr_dev(span2, "class", "portTown svelte-1kqf2go");
+    			add_location(span2, file$1, 72, 4, 1637);
+    			attr_dev(div1, "class", "portDetails svelte-1kqf2go");
+    			add_location(div1, file$1, 70, 2, 1562);
+    			attr_dev(li, "class", "svelte-1kqf2go");
     			toggle_class(li, "reversed", /*iconRight*/ ctx[4][/*port*/ ctx[0].code]);
-    			add_location(li, file$1, 63, 0, 1350);
+    			add_location(li, file$1, 63, 0, 1389);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -604,7 +677,7 @@ var app = (function () {
     	const dispatchEvent = createEventDispatcher();
 
     	const portSelected = selectedPort => {
-    		dispatchEvent("portSelected", selectedPort);
+    		dispatchEvent("portSelected", selectedPort.code);
     	};
 
     	let { port } = $$props;
@@ -624,11 +697,11 @@ var app = (function () {
     	const writable_props = ["port"];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<PortMapView> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<PortListItem> was created with unknown prop '${key}'`);
     	});
 
     	let { $$slots = {}, $$scope } = $$props;
-    	validate_slots("PortMapView", $$slots, []);
+    	validate_slots("PortListItem", $$slots, []);
     	const click_handler = _ => portSelected(port);
 
     	$$self.$$set = $$props => {
@@ -657,14 +730,14 @@ var app = (function () {
     	return [port, portSelected, portTown, portName, iconRight, click_handler];
     }
 
-    class PortMapView extends SvelteComponentDev {
+    class PortListItem extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
     		init(this, options, instance$1, create_fragment$1, safe_not_equal, { port: 0 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
-    			tagName: "PortMapView",
+    			tagName: "PortListItem",
     			options,
     			id: create_fragment$1.name
     		});
@@ -673,29 +746,163 @@ var app = (function () {
     		const props = options.props || {};
 
     		if (/*port*/ ctx[0] === undefined && !("port" in props)) {
-    			console.warn("<PortMapView> was created without expected prop 'port'");
+    			console.warn("<PortListItem> was created without expected prop 'port'");
     		}
     	}
 
     	get port() {
-    		throw new Error("<PortMapView>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error("<PortListItem>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	set port(value) {
-    		throw new Error("<PortMapView>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error("<PortListItem>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
-    /* src/RouteSelector.svelte generated by Svelte v3.24.1 */
-
-    const { Object: Object_1, console: console_1 } = globals;
-    const file$2 = "src/RouteSelector.svelte";
-
-    function get_each_context_1(ctx, list, i) {
-    	const child_ctx = ctx.slice();
-    	child_ctx[9] = list[i];
-    	return child_ctx;
+    const subscriber_queue = [];
+    /**
+     * Creates a `Readable` store that allows reading by subscription.
+     * @param value initial value
+     * @param {StartStopNotifier}start start and stop notifications for subscriptions
+     */
+    function readable(value, start) {
+        return {
+            subscribe: writable(value, start).subscribe,
+        };
     }
+    /**
+     * Create a `Writable` store that allows both updating and reading by subscription.
+     * @param {*=}value initial value
+     * @param {StartStopNotifier=}start start and stop notifications for subscriptions
+     */
+    function writable(value, start = noop) {
+        let stop;
+        const subscribers = [];
+        function set(new_value) {
+            if (safe_not_equal(value, new_value)) {
+                value = new_value;
+                if (stop) { // store is ready
+                    const run_queue = !subscriber_queue.length;
+                    for (let i = 0; i < subscribers.length; i += 1) {
+                        const s = subscribers[i];
+                        s[1]();
+                        subscriber_queue.push(s, value);
+                    }
+                    if (run_queue) {
+                        for (let i = 0; i < subscriber_queue.length; i += 2) {
+                            subscriber_queue[i][0](subscriber_queue[i + 1]);
+                        }
+                        subscriber_queue.length = 0;
+                    }
+                }
+            }
+        }
+        function update(fn) {
+            set(fn(value));
+        }
+        function subscribe(run, invalidate = noop) {
+            const subscriber = [run, invalidate];
+            subscribers.push(subscriber);
+            if (subscribers.length === 1) {
+                stop = start(set) || noop;
+            }
+            run(value);
+            return () => {
+                const index = subscribers.indexOf(subscriber);
+                if (index !== -1) {
+                    subscribers.splice(index, 1);
+                }
+                if (subscribers.length === 0) {
+                    stop();
+                    stop = null;
+                }
+            };
+        }
+        return { set, update, subscribe };
+    }
+
+    const request = async (method, url, params) => {
+        console.log(`Communicator#request`);
+        const fetch_options = Object.assign({ method: method }, params);
+        console.log(`Communicator#request  request: ${method}: ${url}`, fetch_options);
+        // return fetch(url, fetch_options)
+        let response = await fetch(url, fetch_options);
+        let networkAttempts = 0;
+        while (networkAttempts < 5) {
+            console.log(`Communicator#request  Requesting...`);
+            if (response.status !== 200) {
+                networkAttempts = networkAttempts + 1;
+                console.log(`Communicator#request  Error detected, retry #${networkAttempts}`);
+                response = await request(method, url, params);
+            }
+            else {
+                console.log(`Communicator#request  Reponse valid`);
+                break;
+            }
+        }
+        return response;
+    };
+    const Communicator = {
+        getAllPorts: async () => {
+            console.log(`Communicator#getAllPorts  Contacting berries...`);
+            let response = await request('GET', '/api/small', {});
+            if (response.status === 200) {
+                console.log(`Communicator#getAllPorts  Results valid, returning restults`);
+                const parsedJson = await response.json();
+                return JSON.parse(parsedJson["page"]);
+            }
+            else {
+                console.log(`Communicator#getAllPorts  Something wrong, return empty array`);
+                return [];
+            }
+        },
+        getRouteInfo: async (uri) => {
+            console.log(`Communicator#getRouteInfo  fetching route: ${uri}`);
+            let response = await request('GET', `/api/current-conditions/${uri}`, {});
+            if (response.status === 200) {
+                console.log(`Communicator#getRouteInfo  Results valid, returning restults`);
+                const parsedJson = await response.json();
+                return parsedJson["page"];
+            }
+            else {
+                console.log(`Communicator#getRouteInfo  Something wrong, return empty array`);
+                return '';
+            }
+        }
+    };
+
+    const initialValue = new Map;
+    const createPortsStore = () => {
+        const dataStore = readable(initialValue, createOnSubscribe());
+        return {
+            subscribe: dataStore.subscribe,
+            refresh: () => { }
+        };
+    };
+    const fetchData = async (set) => {
+        console.log(`portsStore#fetchData:  fetching ports...`);
+        Communicator.getAllPorts().then(newPortsData => {
+            console.log(`portsStore#fetchData:  got ports`);
+            const finalData = newPortsData.reduce((memo, route) => {
+                memo.set(route.code, route);
+                return memo;
+            }, initialValue);
+            set(finalData);
+        });
+    };
+    const createOnSubscribe = () => {
+        return (set) => {
+            fetchData(set);
+            return unsubscribe;
+        };
+    };
+    const unsubscribe = () => { };
+    const ports = createPortsStore();
+
+    /* src/PortList.svelte generated by Svelte v3.24.1 */
+
+    const { console: console_1 } = globals;
+    const file$2 = "src/PortList.svelte";
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -703,136 +910,106 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (65:2) {:else}
-    function create_else_block(ctx) {
-    	let header;
-    	let t1;
+    // (53:2) {#if backButton}
+    function create_if_block(ctx) {
     	let backbutton;
-    	let t2;
-    	let ul;
     	let current;
     	backbutton = new BackButton({ $$inline: true });
-    	backbutton.$on("backButton", /*backButton_handler*/ ctx[7]);
-    	let each_value_1 = /*origin*/ ctx[0].destinationRoutes;
-    	validate_each_argument(each_value_1);
-    	let each_blocks = [];
-
-    	for (let i = 0; i < each_value_1.length; i += 1) {
-    		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
-    	}
-
-    	const out = i => transition_out(each_blocks[i], 1, 1, () => {
-    		each_blocks[i] = null;
-    	});
+    	backbutton.$on("backButton", /*backButton_handler*/ ctx[4]);
 
     	const block = {
     		c: function create() {
-    			header = element("header");
-    			header.textContent = "Destination?";
-    			t1 = space();
     			create_component(backbutton.$$.fragment);
-    			t2 = space();
-    			ul = element("ul");
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].c();
-    			}
-
-    			attr_dev(header, "class", "svelte-1t0nfg");
-    			add_location(header, file$2, 65, 4, 1589);
-    			attr_dev(ul, "class", "svelte-1t0nfg");
-    			add_location(ul, file$2, 67, 4, 1656);
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, header, anchor);
-    			insert_dev(target, t1, anchor);
     			mount_component(backbutton, target, anchor);
-    			insert_dev(target, t2, anchor);
-    			insert_dev(target, ul, anchor);
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(ul, null);
-    			}
-
     			current = true;
-    		},
-    		p: function update(ctx, dirty) {
-    			if (dirty & /*origin, destinationSelected*/ 17) {
-    				each_value_1 = /*origin*/ ctx[0].destinationRoutes;
-    				validate_each_argument(each_value_1);
-    				let i;
-
-    				for (i = 0; i < each_value_1.length; i += 1) {
-    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
-
-    					if (each_blocks[i]) {
-    						each_blocks[i].p(child_ctx, dirty);
-    						transition_in(each_blocks[i], 1);
-    					} else {
-    						each_blocks[i] = create_each_block_1(child_ctx);
-    						each_blocks[i].c();
-    						transition_in(each_blocks[i], 1);
-    						each_blocks[i].m(ul, null);
-    					}
-    				}
-
-    				group_outros();
-
-    				for (i = each_value_1.length; i < each_blocks.length; i += 1) {
-    					out(i);
-    				}
-
-    				check_outros();
-    			}
     		},
     		i: function intro(local) {
     			if (current) return;
     			transition_in(backbutton.$$.fragment, local);
-
-    			for (let i = 0; i < each_value_1.length; i += 1) {
-    				transition_in(each_blocks[i]);
-    			}
-
     			current = true;
     		},
     		o: function outro(local) {
     			transition_out(backbutton.$$.fragment, local);
-    			each_blocks = each_blocks.filter(Boolean);
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				transition_out(each_blocks[i]);
-    			}
-
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(header);
-    			if (detaching) detach_dev(t1);
     			destroy_component(backbutton, detaching);
-    			if (detaching) detach_dev(t2);
-    			if (detaching) detach_dev(ul);
-    			destroy_each(each_blocks, detaching);
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block.name,
-    		type: "else",
-    		source: "(65:2) {:else}",
+    		id: create_if_block.name,
+    		type: "if",
+    		source: "(53:2) {#if backButton}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (58:2) {#if objectIsEmpty(origin)}
-    function create_if_block(ctx) {
+    // (57:4) {#each sortedPorts as port}
+    function create_each_block(ctx) {
+    	let portlistitem;
+    	let current;
+
+    	portlistitem = new PortListItem({
+    			props: { port: /*port*/ ctx[9] },
+    			$$inline: true
+    		});
+
+    	portlistitem.$on("portSelected", /*portSelected_handler*/ ctx[5]);
+
+    	const block = {
+    		c: function create() {
+    			create_component(portlistitem.$$.fragment);
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(portlistitem, target, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			const portlistitem_changes = {};
+    			if (dirty & /*sortedPorts*/ 4) portlistitem_changes.port = /*port*/ ctx[9];
+    			portlistitem.$set(portlistitem_changes);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(portlistitem.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(portlistitem.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(portlistitem, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block.name,
+    		type: "each",
+    		source: "(57:4) {#each sortedPorts as port}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$2(ctx) {
+    	let section;
     	let header;
+    	let t0;
     	let t1;
+    	let t2;
     	let ul;
     	let current;
-    	let each_value = /*sortedPorts*/ ctx[1];
+    	let if_block = /*backButton*/ ctx[1] && create_if_block(ctx);
+    	let each_value = /*sortedPorts*/ ctx[2];
     	validate_each_argument(each_value);
     	let each_blocks = [];
 
@@ -846,24 +1023,36 @@ var app = (function () {
 
     	const block = {
     		c: function create() {
+    			section = element("section");
     			header = element("header");
-    			header.textContent = "Origin?";
+    			t0 = text(/*title*/ ctx[0]);
     			t1 = space();
+    			if (if_block) if_block.c();
+    			t2 = space();
     			ul = element("ul");
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].c();
     			}
 
-    			attr_dev(header, "class", "svelte-1t0nfg");
-    			add_location(header, file$2, 58, 4, 1420);
-    			attr_dev(ul, "class", "svelte-1t0nfg");
-    			add_location(ul, file$2, 59, 4, 1449);
+    			attr_dev(header, "class", "svelte-108qigy");
+    			add_location(header, file$2, 51, 2, 1275);
+    			attr_dev(ul, "class", "svelte-108qigy");
+    			add_location(ul, file$2, 55, 2, 1362);
+    			attr_dev(section, "class", "portList svelte-108qigy");
+    			add_location(section, file$2, 50, 0, 1246);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, header, anchor);
-    			insert_dev(target, t1, anchor);
-    			insert_dev(target, ul, anchor);
+    			insert_dev(target, section, anchor);
+    			append_dev(section, header);
+    			append_dev(header, t0);
+    			append_dev(section, t1);
+    			if (if_block) if_block.m(section, null);
+    			append_dev(section, t2);
+    			append_dev(section, ul);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].m(ul, null);
@@ -871,9 +1060,32 @@ var app = (function () {
 
     			current = true;
     		},
-    		p: function update(ctx, dirty) {
-    			if (dirty & /*sortedPorts, originSelected*/ 10) {
-    				each_value = /*sortedPorts*/ ctx[1];
+    		p: function update(ctx, [dirty]) {
+    			if (!current || dirty & /*title*/ 1) set_data_dev(t0, /*title*/ ctx[0]);
+
+    			if (/*backButton*/ ctx[1]) {
+    				if (if_block) {
+    					if (dirty & /*backButton*/ 2) {
+    						transition_in(if_block, 1);
+    					}
+    				} else {
+    					if_block = create_if_block(ctx);
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(section, t2);
+    				}
+    			} else if (if_block) {
+    				group_outros();
+
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
+
+    				check_outros();
+    			}
+
+    			if (dirty & /*sortedPorts*/ 4) {
+    				each_value = /*sortedPorts*/ ctx[2];
     				validate_each_argument(each_value);
     				let i;
 
@@ -902,6 +1114,7 @@ var app = (function () {
     		},
     		i: function intro(local) {
     			if (current) return;
+    			transition_in(if_block);
 
     			for (let i = 0; i < each_value.length; i += 1) {
     				transition_in(each_blocks[i]);
@@ -910,6 +1123,7 @@ var app = (function () {
     			current = true;
     		},
     		o: function outro(local) {
+    			transition_out(if_block);
     			each_blocks = each_blocks.filter(Boolean);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -919,194 +1133,9 @@ var app = (function () {
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(header);
-    			if (detaching) detach_dev(t1);
-    			if (detaching) detach_dev(ul);
-    			destroy_each(each_blocks, detaching);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_if_block.name,
-    		type: "if",
-    		source: "(58:2) {#if objectIsEmpty(origin)}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (69:6) {#each origin.destinationRoutes as port}
-    function create_each_block_1(ctx) {
-    	let portmapview;
-    	let current;
-
-    	portmapview = new PortMapView({
-    			props: { port: /*port*/ ctx[9] },
-    			$$inline: true
-    		});
-
-    	portmapview.$on("portSelected", /*destinationSelected*/ ctx[4]);
-
-    	const block = {
-    		c: function create() {
-    			create_component(portmapview.$$.fragment);
-    		},
-    		m: function mount(target, anchor) {
-    			mount_component(portmapview, target, anchor);
-    			current = true;
-    		},
-    		p: function update(ctx, dirty) {
-    			const portmapview_changes = {};
-    			if (dirty & /*origin*/ 1) portmapview_changes.port = /*port*/ ctx[9];
-    			portmapview.$set(portmapview_changes);
-    		},
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(portmapview.$$.fragment, local);
-    			current = true;
-    		},
-    		o: function outro(local) {
-    			transition_out(portmapview.$$.fragment, local);
-    			current = false;
-    		},
-    		d: function destroy(detaching) {
-    			destroy_component(portmapview, detaching);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_each_block_1.name,
-    		type: "each",
-    		source: "(69:6) {#each origin.destinationRoutes as port}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (61:6) {#each sortedPorts as port}
-    function create_each_block(ctx) {
-    	let portmapview;
-    	let current;
-
-    	portmapview = new PortMapView({
-    			props: { port: /*port*/ ctx[9] },
-    			$$inline: true
-    		});
-
-    	portmapview.$on("portSelected", /*originSelected*/ ctx[3]);
-
-    	const block = {
-    		c: function create() {
-    			create_component(portmapview.$$.fragment);
-    		},
-    		m: function mount(target, anchor) {
-    			mount_component(portmapview, target, anchor);
-    			current = true;
-    		},
-    		p: function update(ctx, dirty) {
-    			const portmapview_changes = {};
-    			if (dirty & /*sortedPorts*/ 2) portmapview_changes.port = /*port*/ ctx[9];
-    			portmapview.$set(portmapview_changes);
-    		},
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(portmapview.$$.fragment, local);
-    			current = true;
-    		},
-    		o: function outro(local) {
-    			transition_out(portmapview.$$.fragment, local);
-    			current = false;
-    		},
-    		d: function destroy(detaching) {
-    			destroy_component(portmapview, detaching);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_each_block.name,
-    		type: "each",
-    		source: "(61:6) {#each sortedPorts as port}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    function create_fragment$2(ctx) {
-    	let section;
-    	let show_if;
-    	let current_block_type_index;
-    	let if_block;
-    	let current;
-    	const if_block_creators = [create_if_block, create_else_block];
-    	const if_blocks = [];
-
-    	function select_block_type(ctx, dirty) {
-    		if (dirty & /*origin*/ 1) show_if = !!/*objectIsEmpty*/ ctx[2](/*origin*/ ctx[0]);
-    		if (show_if) return 0;
-    		return 1;
-    	}
-
-    	current_block_type_index = select_block_type(ctx, -1);
-    	if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
-
-    	const block = {
-    		c: function create() {
-    			section = element("section");
-    			if_block.c();
-    			attr_dev(section, "class", "routeSelector svelte-1t0nfg");
-    			add_location(section, file$2, 56, 0, 1354);
-    		},
-    		l: function claim(nodes) {
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, section, anchor);
-    			if_blocks[current_block_type_index].m(section, null);
-    			current = true;
-    		},
-    		p: function update(ctx, [dirty]) {
-    			let previous_block_index = current_block_type_index;
-    			current_block_type_index = select_block_type(ctx, dirty);
-
-    			if (current_block_type_index === previous_block_index) {
-    				if_blocks[current_block_type_index].p(ctx, dirty);
-    			} else {
-    				group_outros();
-
-    				transition_out(if_blocks[previous_block_index], 1, 1, () => {
-    					if_blocks[previous_block_index] = null;
-    				});
-
-    				check_outros();
-    				if_block = if_blocks[current_block_type_index];
-
-    				if (!if_block) {
-    					if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
-    					if_block.c();
-    				}
-
-    				transition_in(if_block, 1);
-    				if_block.m(section, null);
-    			}
-    		},
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(if_block);
-    			current = true;
-    		},
-    		o: function outro(local) {
-    			transition_out(if_block);
-    			current = false;
-    		},
-    		d: function destroy(detaching) {
     			if (detaching) detach_dev(section);
-    			if_blocks[current_block_type_index].d();
+    			if (if_block) if_block.d();
+    			destroy_each(each_blocks, detaching);
     		}
     	};
 
@@ -1122,69 +1151,57 @@ var app = (function () {
     }
 
     function instance$2($$self, $$props, $$invalidate) {
+    	let $ports;
+    	validate_store(ports, "ports");
+    	component_subscribe($$self, ports, $$value => $$invalidate(6, $ports = $$value));
     	
-    	let { routesData } = $$props;
-    	let { origin } = $$props;
-    	let { destination } = $$props;
-    	const portsSort = ["LNG", "HSB", "NAN", "DUK", "TSA", "SWB"];
+    	let { filter = "" } = $$props;
+    	let { title = "" } = $$props;
+    	let { backButton = false } = $$props;
+    	const portsSortOrder = ["LNG", "HSB", "NAN", "DUK", "TSA", "SWB"];
+    	const portsSort = (a, b) => portsSortOrder.indexOf(a.code) - portsSortOrder.indexOf(b.code);
     	let sortedPorts = [];
+    	const writable_props = ["filter", "title", "backButton"];
 
-    	if (routesData.length > 0) ; else {
-    		sortedPorts.length = 0;
-    	}
-
-    	console.log("dafuq these ports ", sortedPorts);
-
-    	const objectIsEmpty = obj => {
-    		return Object.keys(obj).length === 0 && obj.constructor === Object;
-    	};
-
-    	const originSelected = event => {
-    		console.log("RouteSelector# setting a new origin port:", event.detail);
-    		$$invalidate(0, origin = event.detail);
-    	};
-
-    	const destinationSelected = event => {
-    		$$invalidate(5, destination = event.detail);
-    	};
-
-    	const writable_props = ["routesData", "origin", "destination"];
-
-    	Object_1.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<RouteSelector> was created with unknown prop '${key}'`);
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<PortList> was created with unknown prop '${key}'`);
     	});
 
     	let { $$slots = {}, $$scope } = $$props;
-    	validate_slots("RouteSelector", $$slots, []);
+    	validate_slots("PortList", $$slots, []);
 
     	function backButton_handler(event) {
     		bubble($$self, event);
     	}
 
+    	function portSelected_handler(event) {
+    		bubble($$self, event);
+    	}
+
     	$$self.$$set = $$props => {
-    		if ("routesData" in $$props) $$invalidate(6, routesData = $$props.routesData);
-    		if ("origin" in $$props) $$invalidate(0, origin = $$props.origin);
-    		if ("destination" in $$props) $$invalidate(5, destination = $$props.destination);
+    		if ("filter" in $$props) $$invalidate(3, filter = $$props.filter);
+    		if ("title" in $$props) $$invalidate(0, title = $$props.title);
+    		if ("backButton" in $$props) $$invalidate(1, backButton = $$props.backButton);
     	};
 
     	$$self.$capture_state = () => ({
     		BackButton,
-    		PortMapView,
-    		routesData,
-    		origin,
-    		destination,
+    		PortListItem,
+    		ports,
+    		filter,
+    		title,
+    		backButton,
+    		portsSortOrder,
     		portsSort,
     		sortedPorts,
-    		objectIsEmpty,
-    		originSelected,
-    		destinationSelected
+    		$ports
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("routesData" in $$props) $$invalidate(6, routesData = $$props.routesData);
-    		if ("origin" in $$props) $$invalidate(0, origin = $$props.origin);
-    		if ("destination" in $$props) $$invalidate(5, destination = $$props.destination);
-    		if ("sortedPorts" in $$props) $$invalidate(1, sortedPorts = $$props.sortedPorts);
+    		if ("filter" in $$props) $$invalidate(3, filter = $$props.filter);
+    		if ("title" in $$props) $$invalidate(0, title = $$props.title);
+    		if ("backButton" in $$props) $$invalidate(1, backButton = $$props.backButton);
+    		if ("sortedPorts" in $$props) $$invalidate(2, sortedPorts = $$props.sortedPorts);
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -1192,198 +1209,103 @@ var app = (function () {
     	}
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*routesData*/ 64) {
+    		if ($$self.$$.dirty & /*filter, $ports*/ 72) {
     			 {
-    				if (routesData.length > 0) {
-    					$$invalidate(1, sortedPorts = routesData.sort((a, b) => portsSort.indexOf(a.code) - portsSort.indexOf(b.code)));
+    				if (filter) {
+    					$$invalidate(2, sortedPorts = $ports.get(filter).destinationRoutes.sort(portsSort));
+    				} else {
+    					console.log("PortList#no filter sortem", $ports);
+    					let allRoutes = Array.from($ports.values());
+    					$$invalidate(2, sortedPorts = allRoutes.sort(portsSort));
     				}
     			}
     		}
     	};
 
     	return [
-    		origin,
+    		title,
+    		backButton,
     		sortedPorts,
-    		objectIsEmpty,
-    		originSelected,
-    		destinationSelected,
-    		destination,
-    		routesData,
-    		backButton_handler
+    		filter,
+    		backButton_handler,
+    		portSelected_handler
     	];
     }
 
-    class RouteSelector extends SvelteComponentDev {
+    class PortList extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$2, create_fragment$2, safe_not_equal, { routesData: 6, origin: 0, destination: 5 });
+    		init(this, options, instance$2, create_fragment$2, safe_not_equal, { filter: 3, title: 0, backButton: 1 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
-    			tagName: "RouteSelector",
+    			tagName: "PortList",
     			options,
     			id: create_fragment$2.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*routesData*/ ctx[6] === undefined && !("routesData" in props)) {
-    			console_1.warn("<RouteSelector> was created without expected prop 'routesData'");
-    		}
-
-    		if (/*origin*/ ctx[0] === undefined && !("origin" in props)) {
-    			console_1.warn("<RouteSelector> was created without expected prop 'origin'");
-    		}
-
-    		if (/*destination*/ ctx[5] === undefined && !("destination" in props)) {
-    			console_1.warn("<RouteSelector> was created without expected prop 'destination'");
-    		}
     	}
 
-    	get routesData() {
-    		throw new Error("<RouteSelector>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	get filter() {
+    		throw new Error("<PortList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	set routesData(value) {
-    		throw new Error("<RouteSelector>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	set filter(value) {
+    		throw new Error("<PortList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	get origin() {
-    		throw new Error("<RouteSelector>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	get title() {
+    		throw new Error("<PortList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	set origin(value) {
-    		throw new Error("<RouteSelector>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	set title(value) {
+    		throw new Error("<PortList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	get destination() {
-    		throw new Error("<RouteSelector>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	get backButton() {
+    		throw new Error("<PortList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	set destination(value) {
-    		throw new Error("<RouteSelector>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	set backButton(value) {
+    		throw new Error("<PortList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
-    /* src/PastDepatureListView.svelte generated by Svelte v3.24.1 */
+    /* src/Clock.svelte generated by Svelte v3.24.1 */
 
-    const { console: console_1$1 } = globals;
-    const file$3 = "src/PastDepatureListView.svelte";
-
-    // (34:4) {:else}
-    function create_else_block$1(ctx) {
-    	let span;
-
-    	const block = {
-    		c: function create() {
-    			span = element("span");
-    			span.textContent = `${Math.round(/*percentComplete*/ ctx[3])}%`;
-    			attr_dev(span, "class", "percentComplete");
-    			add_location(span, file$3, 34, 6, 1154);
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, span, anchor);
-    		},
-    		p: noop,
-    		d: function destroy(detaching) {
-    			if (detaching) detach_dev(span);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_else_block$1.name,
-    		type: "else",
-    		source: "(34:4) {:else}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (32:4) {#if arrived}
-    function create_if_block$1(ctx) {
-    	let span;
-
-    	const block = {
-    		c: function create() {
-    			span = element("span");
-    			span.textContent = "100";
-    			attr_dev(span, "class", "percentComplete");
-    			add_location(span, file$3, 32, 6, 1095);
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, span, anchor);
-    		},
-    		p: noop,
-    		d: function destroy(detaching) {
-    			if (detaching) detach_dev(span);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_if_block$1.name,
-    		type: "if",
-    		source: "(32:4) {#if arrived}",
-    		ctx
-    	});
-
-    	return block;
-    }
+    const file$3 = "src/Clock.svelte";
 
     function create_fragment$3(ctx) {
-    	let li;
-    	let span0;
-    	let t1;
-    	let t2;
     	let span1;
-
-    	function select_block_type(ctx, dirty) {
-    		if (/*arrived*/ ctx[2]) return create_if_block$1;
-    		return create_else_block$1;
-    	}
-
-    	let current_block_type = select_block_type(ctx);
-    	let if_block = current_block_type(ctx);
+    	let t0;
+    	let span0;
+    	let t2;
 
     	const block = {
     		c: function create() {
-    			li = element("li");
-    			span0 = element("span");
-    			span0.textContent = `${/*formatTime*/ ctx[4](/*departureTime*/ ctx[0])}`;
-    			t1 = space();
-    			if_block.c();
-    			t2 = space();
     			span1 = element("span");
-    			span1.textContent = `${/*formatTime*/ ctx[4](/*arrivalTime*/ ctx[1])}`;
-    			attr_dev(span0, "class", "start");
-    			add_location(span0, file$3, 30, 4, 1016);
-    			attr_dev(span1, "class", "end");
-    			add_location(span1, file$3, 36, 4, 1236);
-    			attr_dev(li, "class", "svelte-1c7vmtk");
-    			add_location(li, file$3, 29, 0, 1007);
+    			t0 = text(/*hours*/ ctx[0]);
+    			span0 = element("span");
+    			span0.textContent = ":";
+    			t2 = text(/*secondsAndMeridiem*/ ctx[1]);
+    			attr_dev(span0, "class", "blink svelte-1wmevsi");
+    			add_location(span0, file$3, 38, 27, 820);
+    			attr_dev(span1, "class", "clock svelte-1wmevsi");
+    			add_location(span1, file$3, 38, 0, 793);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, li, anchor);
-    			append_dev(li, span0);
-    			append_dev(li, t1);
-    			if_block.m(li, null);
-    			append_dev(li, t2);
-    			append_dev(li, span1);
+    			insert_dev(target, span1, anchor);
+    			append_dev(span1, t0);
+    			append_dev(span1, span0);
+    			append_dev(span1, t2);
     		},
-    		p: function update(ctx, [dirty]) {
-    			if_block.p(ctx, dirty);
-    		},
+    		p: noop,
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(li);
-    			if_block.d();
+    			if (detaching) detach_dev(span1);
     		}
     	};
 
@@ -1399,6 +1321,290 @@ var app = (function () {
     }
 
     function instance$3($$self, $$props, $$invalidate) {
+    	let { time } = $$props;
+
+    	const formatTime = time => {
+    		const date = new Date(time);
+
+    		return date.toLocaleTimeString("en", {
+    			hour: "2-digit",
+    			minute: "2-digit",
+    			hour12: true
+    		});
+    	};
+
+    	const formattedTime = formatTime(time);
+    	const [hours, secondsAndMeridiem] = formattedTime.split(":");
+    	const writable_props = ["time"];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Clock> was created with unknown prop '${key}'`);
+    	});
+
+    	let { $$slots = {}, $$scope } = $$props;
+    	validate_slots("Clock", $$slots, []);
+
+    	$$self.$$set = $$props => {
+    		if ("time" in $$props) $$invalidate(2, time = $$props.time);
+    	};
+
+    	$$self.$capture_state = () => ({
+    		time,
+    		formatTime,
+    		formattedTime,
+    		hours,
+    		secondsAndMeridiem
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ("time" in $$props) $$invalidate(2, time = $$props.time);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [hours, secondsAndMeridiem, time];
+    }
+
+    class Clock extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$3, create_fragment$3, safe_not_equal, { time: 2 });
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Clock",
+    			options,
+    			id: create_fragment$3.name
+    		});
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+
+    		if (/*time*/ ctx[2] === undefined && !("time" in props)) {
+    			console.warn("<Clock> was created without expected prop 'time'");
+    		}
+    	}
+
+    	get time() {
+    		throw new Error("<Clock>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set time(value) {
+    		throw new Error("<Clock>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    /* src/ProgressBar.svelte generated by Svelte v3.24.1 */
+
+    const file$4 = "src/ProgressBar.svelte";
+
+    function create_fragment$4(ctx) {
+    	let div;
+    	let span;
+    	let span_data_label_value;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			span = element("span");
+    			attr_dev(span, "class", "value svelte-60rvhw");
+    			set_style(span, "--progress-value", /*progress*/ ctx[1] + "%");
+    			attr_dev(span, "data-label", span_data_label_value = /*value*/ ctx[0] > 20 ? `${/*progress*/ ctx[1]}%` : "");
+    			add_location(span, file$4, 66, 2, 1320);
+    			attr_dev(div, "class", "progress svelte-60rvhw");
+    			add_location(div, file$4, 65, 0, 1295);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, span);
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (dirty & /*value*/ 1 && span_data_label_value !== (span_data_label_value = /*value*/ ctx[0] > 20 ? `${/*progress*/ ctx[1]}%` : "")) {
+    				attr_dev(span, "data-label", span_data_label_value);
+    			}
+    		},
+    		i: noop,
+    		o: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$4.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$4($$self, $$props, $$invalidate) {
+    	let { value = 0 } = $$props;
+    	const progress = value > 100 ? 100 : value;
+    	const writable_props = ["value"];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<ProgressBar> was created with unknown prop '${key}'`);
+    	});
+
+    	let { $$slots = {}, $$scope } = $$props;
+    	validate_slots("ProgressBar", $$slots, []);
+
+    	$$self.$$set = $$props => {
+    		if ("value" in $$props) $$invalidate(0, value = $$props.value);
+    	};
+
+    	$$self.$capture_state = () => ({ value, progress });
+
+    	$$self.$inject_state = $$props => {
+    		if ("value" in $$props) $$invalidate(0, value = $$props.value);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [value, progress];
+    }
+
+    class ProgressBar extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$4, create_fragment$4, safe_not_equal, { value: 0 });
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "ProgressBar",
+    			options,
+    			id: create_fragment$4.name
+    		});
+    	}
+
+    	get value() {
+    		throw new Error("<ProgressBar>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set value(value) {
+    		throw new Error("<ProgressBar>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    /* src/PastDepatureListView.svelte generated by Svelte v3.24.1 */
+
+    const { console: console_1$1 } = globals;
+    const file$5 = "src/PastDepatureListView.svelte";
+
+    function create_fragment$5(ctx) {
+    	let li;
+    	let div0;
+    	let t0;
+    	let clock0;
+    	let t1;
+    	let progressbar;
+    	let t2;
+    	let div1;
+    	let t3_value = (/*arrived*/ ctx[2] ? "Arrived" : "ETA") + "";
+    	let t3;
+    	let t4;
+    	let clock1;
+    	let current;
+
+    	clock0 = new Clock({
+    			props: { time: /*departureTime*/ ctx[0] },
+    			$$inline: true
+    		});
+
+    	progressbar = new ProgressBar({
+    			props: {
+    				value: Math.round(/*percentComplete*/ ctx[3])
+    			},
+    			$$inline: true
+    		});
+
+    	clock1 = new Clock({
+    			props: { time: /*arrivalTime*/ ctx[1] },
+    			$$inline: true
+    		});
+
+    	const block = {
+    		c: function create() {
+    			li = element("li");
+    			div0 = element("div");
+    			t0 = text("Departed\n      ");
+    			create_component(clock0.$$.fragment);
+    			t1 = space();
+    			create_component(progressbar.$$.fragment);
+    			t2 = space();
+    			div1 = element("div");
+    			t3 = text(t3_value);
+    			t4 = space();
+    			create_component(clock1.$$.fragment);
+    			attr_dev(div0, "class", "departure svelte-1w81tqt");
+    			add_location(div0, file$5, 45, 4, 1418);
+    			attr_dev(div1, "class", "arrival svelte-1w81tqt");
+    			add_location(div1, file$5, 50, 4, 1565);
+    			attr_dev(li, "class", "svelte-1w81tqt");
+    			add_location(li, file$5, 44, 0, 1409);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, li, anchor);
+    			append_dev(li, div0);
+    			append_dev(div0, t0);
+    			mount_component(clock0, div0, null);
+    			append_dev(li, t1);
+    			mount_component(progressbar, li, null);
+    			append_dev(li, t2);
+    			append_dev(li, div1);
+    			append_dev(div1, t3);
+    			append_dev(div1, t4);
+    			mount_component(clock1, div1, null);
+    			current = true;
+    		},
+    		p: noop,
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(clock0.$$.fragment, local);
+    			transition_in(progressbar.$$.fragment, local);
+    			transition_in(clock1.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(clock0.$$.fragment, local);
+    			transition_out(progressbar.$$.fragment, local);
+    			transition_out(clock1.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(li);
+    			destroy_component(clock0);
+    			destroy_component(progressbar);
+    			destroy_component(clock1);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$5.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$5($$self, $$props, $$invalidate) {
     	
     	let { departure } = $$props;
 
@@ -1436,10 +1642,12 @@ var app = (function () {
     	validate_slots("PastDepatureListView", $$slots, []);
 
     	$$self.$$set = $$props => {
-    		if ("departure" in $$props) $$invalidate(5, departure = $$props.departure);
+    		if ("departure" in $$props) $$invalidate(4, departure = $$props.departure);
     	};
 
     	$$self.$capture_state = () => ({
+    		Clock,
+    		ProgressBar,
     		departure,
     		departureTime,
     		statusObj,
@@ -1453,32 +1661,32 @@ var app = (function () {
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("departure" in $$props) $$invalidate(5, departure = $$props.departure);
+    		if ("departure" in $$props) $$invalidate(4, departure = $$props.departure);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [departureTime, arrivalTime, arrived, percentComplete, formatTime, departure];
+    	return [departureTime, arrivalTime, arrived, percentComplete, departure];
     }
 
     class PastDepatureListView extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$3, create_fragment$3, safe_not_equal, { departure: 5 });
+    		init(this, options, instance$5, create_fragment$5, safe_not_equal, { departure: 4 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "PastDepatureListView",
     			options,
-    			id: create_fragment$3.name
+    			id: create_fragment$5.name
     		});
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
-    		if (/*departure*/ ctx[5] === undefined && !("departure" in props)) {
+    		if (/*departure*/ ctx[4] === undefined && !("departure" in props)) {
     			console_1$1.warn("<PastDepatureListView> was created without expected prop 'departure'");
     		}
     	}
@@ -1494,93 +1702,189 @@ var app = (function () {
 
     /* src/FutureDepatureListView.svelte generated by Svelte v3.24.1 */
 
-    const file$4 = "src/FutureDepatureListView.svelte";
+    const { console: console_1$2 } = globals;
+    const file$6 = "src/FutureDepatureListView.svelte";
 
-    function create_fragment$4(ctx) {
+    // (71:4) {#if departure.deckSpace.mixed}
+    function create_if_block$1(ctx) {
+    	let span;
+    	let t;
+    	let progressbar;
+    	let current;
+
+    	progressbar = new ProgressBar({
+    			props: {
+    				value: 100 - /*departure*/ ctx[0].deckSpace.mixed
+    			},
+    			$$inline: true
+    		});
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			t = text("Mixed: ");
+    			create_component(progressbar.$$.fragment);
+    			attr_dev(span, "class", "svelte-2uxrz2");
+    			add_location(span, file$6, 71, 6, 1529);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			append_dev(span, t);
+    			mount_component(progressbar, span, null);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			const progressbar_changes = {};
+    			if (dirty & /*departure*/ 1) progressbar_changes.value = 100 - /*departure*/ ctx[0].deckSpace.mixed;
+    			progressbar.$set(progressbar_changes);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(progressbar.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(progressbar.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    			destroy_component(progressbar);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$1.name,
+    		type: "if",
+    		source: "(71:4) {#if departure.deckSpace.mixed}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$6(ctx) {
     	let li;
-    	let span0;
-    	let t0_value = /*formatTime*/ ctx[1](/*departure*/ ctx[0].time) + "";
+    	let div0;
     	let t0;
+    	let clock;
     	let t1;
-    	let span1;
-    	let t2_value = /*departure*/ ctx[0].ferry.name + "";
+    	let div1;
+    	let span;
     	let t2;
-    	let span1_data_url_value;
+    	let progressbar;
     	let t3;
-    	let span2;
-    	let t4_value = /*departure*/ ctx[0].deckSpace.total + "";
-    	let t4;
-    	let t5;
-    	let span2_data_standard_available_value;
-    	let span2_data_mixed_available_value;
+    	let current;
+
+    	clock = new Clock({
+    			props: { time: /*departure*/ ctx[0].time },
+    			$$inline: true
+    		});
+
+    	progressbar = new ProgressBar({
+    			props: {
+    				value: 100 - /*departure*/ ctx[0].status.percentAvailable
+    			},
+    			$$inline: true
+    		});
+
+    	let if_block = /*departure*/ ctx[0].deckSpace.mixed && create_if_block$1(ctx);
 
     	const block = {
     		c: function create() {
     			li = element("li");
-    			span0 = element("span");
-    			t0 = text(t0_value);
+    			div0 = element("div");
+    			t0 = text("Departs\n    ");
+    			create_component(clock.$$.fragment);
     			t1 = space();
-    			span1 = element("span");
-    			t2 = text(t2_value);
+    			div1 = element("div");
+    			span = element("span");
+    			t2 = text("Total: ");
+    			create_component(progressbar.$$.fragment);
     			t3 = space();
-    			span2 = element("span");
-    			t4 = text(t4_value);
-    			t5 = text("%");
-    			attr_dev(span0, "class", "depatureTime");
-    			add_location(span0, file$4, 39, 2, 654);
-    			attr_dev(span1, "class", "ferry");
-    			attr_dev(span1, "data-url", span1_data_url_value = /*departure*/ ctx[0].ferry.url);
-    			add_location(span1, file$4, 40, 2, 719);
-    			attr_dev(span2, "class", "deckSpace");
-    			attr_dev(span2, "data-standard-available", span2_data_standard_available_value = /*departure*/ ctx[0].deckSpace?.standard);
-    			attr_dev(span2, "data-mixed-available", span2_data_mixed_available_value = /*departure*/ ctx[0].deckSpace?.mixed);
-    			add_location(span2, file$4, 43, 2, 810);
-    			attr_dev(li, "class", "svelte-1xov3ty");
-    			add_location(li, file$4, 38, 0, 647);
+    			if (if_block) if_block.c();
+    			attr_dev(div0, "class", "departure svelte-2uxrz2");
+    			add_location(div0, file$6, 64, 2, 1290);
+    			attr_dev(span, "class", "svelte-2uxrz2");
+    			add_location(span, file$6, 69, 6, 1403);
+    			attr_dev(div1, "class", "deckspace svelte-2uxrz2");
+    			add_location(div1, file$6, 68, 2, 1373);
+    			attr_dev(li, "class", "svelte-2uxrz2");
+    			add_location(li, file$6, 63, 0, 1283);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
-    			append_dev(li, span0);
-    			append_dev(span0, t0);
+    			append_dev(li, div0);
+    			append_dev(div0, t0);
+    			mount_component(clock, div0, null);
     			append_dev(li, t1);
-    			append_dev(li, span1);
-    			append_dev(span1, t2);
-    			append_dev(li, t3);
-    			append_dev(li, span2);
-    			append_dev(span2, t4);
-    			append_dev(span2, t5);
+    			append_dev(li, div1);
+    			append_dev(div1, span);
+    			append_dev(span, t2);
+    			mount_component(progressbar, span, null);
+    			append_dev(div1, t3);
+    			if (if_block) if_block.m(div1, null);
+    			current = true;
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*departure*/ 1 && t0_value !== (t0_value = /*formatTime*/ ctx[1](/*departure*/ ctx[0].time) + "")) set_data_dev(t0, t0_value);
-    			if (dirty & /*departure*/ 1 && t2_value !== (t2_value = /*departure*/ ctx[0].ferry.name + "")) set_data_dev(t2, t2_value);
+    			const clock_changes = {};
+    			if (dirty & /*departure*/ 1) clock_changes.time = /*departure*/ ctx[0].time;
+    			clock.$set(clock_changes);
+    			const progressbar_changes = {};
+    			if (dirty & /*departure*/ 1) progressbar_changes.value = 100 - /*departure*/ ctx[0].status.percentAvailable;
+    			progressbar.$set(progressbar_changes);
 
-    			if (dirty & /*departure*/ 1 && span1_data_url_value !== (span1_data_url_value = /*departure*/ ctx[0].ferry.url)) {
-    				attr_dev(span1, "data-url", span1_data_url_value);
-    			}
+    			if (/*departure*/ ctx[0].deckSpace.mixed) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
 
-    			if (dirty & /*departure*/ 1 && t4_value !== (t4_value = /*departure*/ ctx[0].deckSpace.total + "")) set_data_dev(t4, t4_value);
+    					if (dirty & /*departure*/ 1) {
+    						transition_in(if_block, 1);
+    					}
+    				} else {
+    					if_block = create_if_block$1(ctx);
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(div1, null);
+    				}
+    			} else if (if_block) {
+    				group_outros();
 
-    			if (dirty & /*departure*/ 1 && span2_data_standard_available_value !== (span2_data_standard_available_value = /*departure*/ ctx[0].deckSpace?.standard)) {
-    				attr_dev(span2, "data-standard-available", span2_data_standard_available_value);
-    			}
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
 
-    			if (dirty & /*departure*/ 1 && span2_data_mixed_available_value !== (span2_data_mixed_available_value = /*departure*/ ctx[0].deckSpace?.mixed)) {
-    				attr_dev(span2, "data-mixed-available", span2_data_mixed_available_value);
+    				check_outros();
     			}
     		},
-    		i: noop,
-    		o: noop,
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(clock.$$.fragment, local);
+    			transition_in(progressbar.$$.fragment, local);
+    			transition_in(if_block);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(clock.$$.fragment, local);
+    			transition_out(progressbar.$$.fragment, local);
+    			transition_out(if_block);
+    			current = false;
+    		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(li);
+    			destroy_component(clock);
+    			destroy_component(progressbar);
+    			if (if_block) if_block.d();
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$4.name,
+    		id: create_fragment$6.name,
     		type: "component",
     		source: "",
     		ctx
@@ -1589,9 +1893,10 @@ var app = (function () {
     	return block;
     }
 
-    function instance$4($$self, $$props, $$invalidate) {
+    function instance$6($$self, $$props, $$invalidate) {
     	
     	let { departure } = $$props;
+    	console.log(`FutureDeparture`, departure);
 
     	// departure = {
     	//   time: number,
@@ -1621,7 +1926,7 @@ var app = (function () {
     	const writable_props = ["departure"];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<FutureDepatureListView> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$2.warn(`<FutureDepatureListView> was created with unknown prop '${key}'`);
     	});
 
     	let { $$slots = {}, $$scope } = $$props;
@@ -1631,7 +1936,12 @@ var app = (function () {
     		if ("departure" in $$props) $$invalidate(0, departure = $$props.departure);
     	};
 
-    	$$self.$capture_state = () => ({ departure, formatTime });
+    	$$self.$capture_state = () => ({
+    		Clock,
+    		ProgressBar,
+    		departure,
+    		formatTime
+    	});
 
     	$$self.$inject_state = $$props => {
     		if ("departure" in $$props) $$invalidate(0, departure = $$props.departure);
@@ -1641,26 +1951,26 @@ var app = (function () {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [departure, formatTime];
+    	return [departure];
     }
 
     class FutureDepatureListView extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$4, create_fragment$4, safe_not_equal, { departure: 0 });
+    		init(this, options, instance$6, create_fragment$6, safe_not_equal, { departure: 0 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "FutureDepatureListView",
     			options,
-    			id: create_fragment$4.name
+    			id: create_fragment$6.name
     		});
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
     		if (/*departure*/ ctx[0] === undefined && !("departure" in props)) {
-    			console.warn("<FutureDepatureListView> was created without expected prop 'departure'");
+    			console_1$2.warn("<FutureDepatureListView> was created without expected prop 'departure'");
     		}
     	}
 
@@ -1673,77 +1983,236 @@ var app = (function () {
     	}
     }
 
+    const cleanString = (str) => {
+        // console.log(`cleanString():`, str)
+        if (str) {
+            return str.trim().replace(/\r?\n|\r|/g, '').replace(/  +/g, ' ');
+        }
+        return '';
+    };
+    // const parking available = querySelector('.t-parking-padding').querySelector('header').textContent.trim().replace(/\r?\n|\r|/g,'').replace(/  +/g, ' ')
+    // const sailingDuration = tableRows[0].querySelector('b').textContent.trim()
+    const RoutePageParser = (page) => {
+        // console.log(`RoutePageParser:`, page)
+        let parser = new DOMParser();
+        const doc = parser.parseFromString(page, "text/html");
+        // console.log(`RoutePageParser doc:`, doc)
+        const parseTime = (fullTimeString) => {
+            // console.log(`parseTime(${fullTimeString})`)
+            const [timeString, meridiem] = fullTimeString.split(' ');
+            let [hours, minutes] = timeString.split(':').map((x) => parseInt(x));
+            if (meridiem.toUpperCase() === 'PM' && hours !== 12) {
+                // console.log('its pm')
+                hours = hours + 12;
+            }
+            const nowStr = new Date().toLocaleString("en-US", { timeZone: "America/Vancouver" });
+            // console.log('whats anowstr', nowStr)
+            const now = new Date(nowStr);
+            // console.log('now:', now)
+            const timeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+            // console.log(`Today at ${hours} ${minutes}: `, timeToday)
+            return timeToday.getTime();
+        };
+        const parsePastStatus = (statusString) => {
+            const [status, timeStr, meridiem] = statusString.split(' ');
+            console.log(`arsing past status time, parseTime(${timeStr} ${meridiem})`);
+            const time = parseTime(`${timeStr} ${meridiem}`);
+            return {
+                status: status.slice(0, -1),
+                time: time
+            };
+        };
+        const parseFutureStatus = (statusString) => {
+            const [percentStr, _availableStr] = statusString.split(' ');
+            return {
+                percentAvailable: parseInt(percentStr.slice(0, -1))
+            };
+        };
+        const parsePercent = (percentString) => {
+            if (percentString && percentString.length > 2) {
+                return parseInt(percentString.slice(0, -1));
+            }
+            return undefined;
+        };
+        const departures = () => {
+            let departures = {
+                future: [],
+                past: []
+            };
+            const departuresTable = doc.querySelector('.detail-departure-table');
+            if (departuresTable) {
+                const tableRows = departuresTable.querySelectorAll('tr');
+                for (let i = 0; i < tableRows.length; i++) {
+                    // console.log(`RoutePageParser#departures  tableRow[${i}]`)
+                    if (i < 2) {
+                        // console.log('RoutePageParser#departures  skip row')
+                        continue;
+                    }
+                    let tableRow = tableRows[i];
+                    if (!tableRow.classList.contains('toggle-div')) {
+                        // console.log(`RoutePageParser#departures  row should contain time and status`)
+                        // describes a departure
+                        const [timeElement, statusElement, togglerElement] = Array.from(tableRow.querySelectorAll('td'));
+                        const timeString = cleanString(timeElement.textContent);
+                        const statusString = cleanString(statusElement.textContent);
+                        if (togglerElement.classList.contains('toggle-arrow')) {
+                            // console.log('RoutePageParser#departures  row has further info')
+                            // a future departure
+                            const extraInfo = tableRows[i + 1];
+                            // console.log('RoutePageParser#departures  further info should be here:', extraInfo)
+                            const ferryData = extraInfo.querySelector('.sailing-ferry-name');
+                            const deckSpaceData = extraInfo.querySelector('#deckSpace');
+                            let deckSpaceObject;
+                            if (deckSpaceData) {
+                                const [totalSpace, standardSpace, mixedSpace] = Array.from(deckSpaceData.querySelectorAll('.progress-bar'));
+                                console.log('wtf is the deckspace [total, standard, mixed]:', totalSpace, standardSpace, mixedSpace);
+                                deckSpaceObject = {
+                                    total: parsePercent(cleanString(totalSpace === null || totalSpace === void 0 ? void 0 : totalSpace.children[0].textContent)),
+                                    standard: parsePercent(cleanString(standardSpace === null || standardSpace === void 0 ? void 0 : standardSpace.children[0].textContent)),
+                                    mixed: parsePercent(cleanString(mixedSpace === null || mixedSpace === void 0 ? void 0 : mixedSpace.children[0].textContent))
+                                };
+                            }
+                            else {
+                                deckSpaceObject = {};
+                            }
+                            const futureDeparture = {
+                                time: parseTime(cleanString(timeElement.textContent)),
+                                status: parseFutureStatus(cleanString(statusElement.textContent)),
+                                ferry: {
+                                    name: cleanString((ferryData === null || ferryData === void 0 ? void 0 : ferryData.textContent) || null),
+                                    url: (ferryData === null || ferryData === void 0 ? void 0 : ferryData.getAttribute("href")) || ''
+                                },
+                                deckSpace: deckSpaceObject
+                            };
+                            departures.future.push(futureDeparture);
+                        }
+                        else {
+                            // console.log('RoutePageParser#departures no toggle arrow, its a past departure')
+                            // a past departure
+                            departures.past.push({
+                                time: parseTime(timeString),
+                                status: parsePastStatus(statusString)
+                            });
+                        }
+                    }
+                }
+            }
+            else {
+                departures = {
+                    future: [],
+                    past: []
+                };
+            }
+            return departures;
+        };
+        return {
+            departures: departures
+        };
+    };
+
+    const routeStatus = async (originCode, destinationCode) => {
+        let origin = {};
+        console.log('routeStauts attempt to read from store...');
+        ports.subscribe((value) => {
+            console.log(`reading store value, looking for ${originCode}`, value);
+            const wtf = value.get(originCode);
+            console.log('wtf is wtf', wtf);
+            origin = value.get(originCode) || {};
+            // - sort out the possibly undefined problem here
+            // - get to finishing this stores rewrite
+            // - try to get it back to where it was before but
+            //   with a better codebase this time (hopefully)
+            // - swing back around on the concept of baseline
+            //   designing
+        });
+        console.log('origin should now be set:', origin);
+        const destination = origin.destinationRoutes.find(destination => destination.code == destinationCode) || {};
+        const routeStatusUrl = `${origin.travelRouteName}-${destination.travelRouteName}/${origin.code}-${destination.code}`;
+        const routeStatusPageString = await Communicator.getRouteInfo(routeStatusUrl);
+        const parser = RoutePageParser(routeStatusPageString);
+        const routeStatus = parser.departures();
+        return routeStatus;
+    };
+
     /* src/RouteViewer.svelte generated by Svelte v3.24.1 */
-    const file$5 = "src/RouteViewer.svelte";
+    const file$7 = "src/RouteViewer.svelte";
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[3] = list[i];
+    	child_ctx[7] = list[i];
     	return child_ctx;
     }
 
-    function get_each_context_1$1(ctx, list, i) {
+    function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[6] = list[i];
+    	child_ctx[10] = list[i];
     	return child_ctx;
     }
 
-    // (58:2) {:else}
-    function create_else_block$2(ctx) {
-    	let t;
+    // (64:4) {:catch error}
+    function create_catch_block(ctx) {
+    	let p;
+    	let t0;
+    	let t1_value = /*error*/ ctx[13].message + "";
+    	let t1;
 
     	const block = {
     		c: function create() {
-    			t = text("Awaiting Route data...");
+    			p = element("p");
+    			t0 = text("Something went wrong: ");
+    			t1 = text(t1_value);
+    			add_location(p, file$7, 64, 6, 1772);
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, t, anchor);
+    			insert_dev(target, p, anchor);
+    			append_dev(p, t0);
+    			append_dev(p, t1);
     		},
     		p: noop,
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(t);
+    			if (detaching) detach_dev(p);
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$2.name,
-    		type: "else",
-    		source: "(58:2) {:else}",
+    		id: create_catch_block.name,
+    		type: "catch",
+    		source: "(64:4) {:catch error}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (43:2) {#if selectedRouteParser && departures }
-    function create_if_block$2(ctx) {
-    	let backbutton;
-    	let t0;
-    	let section;
+    // (52:4) {:then routeStatus}
+    function create_then_block(ctx) {
     	let ul0;
+    	let t0;
+    	let clock;
     	let t1;
-    	let hr;
-    	let t2;
     	let ul1;
     	let current;
-    	backbutton = new BackButton({ $$inline: true });
-    	backbutton.$on("backButton", /*backButton_handler*/ ctx[2]);
-    	let each_value_1 = /*departures*/ ctx[1].past;
+    	let each_value_1 = /*routeStatus*/ ctx[6].past;
     	validate_each_argument(each_value_1);
     	let each_blocks_1 = [];
 
     	for (let i = 0; i < each_value_1.length; i += 1) {
-    		each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
+    		each_blocks_1[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
     	}
 
     	const out = i => transition_out(each_blocks_1[i], 1, 1, () => {
     		each_blocks_1[i] = null;
     	});
 
-    	let each_value = /*departures*/ ctx[1].future;
+    	clock = new Clock({
+    			props: { time: /*now*/ ctx[1] },
+    			$$inline: true
+    		});
+
+    	let each_value = /*routeStatus*/ ctx[6].future;
     	validate_each_argument(each_value);
     	let each_blocks = [];
 
@@ -1757,46 +2226,37 @@ var app = (function () {
 
     	const block = {
     		c: function create() {
-    			create_component(backbutton.$$.fragment);
-    			t0 = space();
-    			section = element("section");
     			ul0 = element("ul");
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
     				each_blocks_1[i].c();
     			}
 
+    			t0 = space();
+    			create_component(clock.$$.fragment);
     			t1 = space();
-    			hr = element("hr");
-    			t2 = space();
     			ul1 = element("ul");
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].c();
     			}
 
-    			attr_dev(ul0, "class", "pastDepartures svelte-ghxnv8");
-    			add_location(ul0, file$5, 45, 6, 1023);
-    			add_location(hr, file$5, 50, 6, 1195);
-    			attr_dev(ul1, "class", "futureDepartures svelte-ghxnv8");
-    			add_location(ul1, file$5, 51, 6, 1206);
-    			attr_dev(section, "class", "routes svelte-ghxnv8");
-    			add_location(section, file$5, 44, 4, 992);
+    			attr_dev(ul0, "class", "pastDepartures svelte-18kan3u");
+    			add_location(ul0, file$7, 52, 8, 1348);
+    			attr_dev(ul1, "class", "futureDepartures svelte-18kan3u");
+    			add_location(ul1, file$7, 58, 8, 1561);
     		},
     		m: function mount(target, anchor) {
-    			mount_component(backbutton, target, anchor);
-    			insert_dev(target, t0, anchor);
-    			insert_dev(target, section, anchor);
-    			append_dev(section, ul0);
+    			insert_dev(target, ul0, anchor);
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
     				each_blocks_1[i].m(ul0, null);
     			}
 
-    			append_dev(section, t1);
-    			append_dev(section, hr);
-    			append_dev(section, t2);
-    			append_dev(section, ul1);
+    			insert_dev(target, t0, anchor);
+    			mount_component(clock, target, anchor);
+    			insert_dev(target, t1, anchor);
+    			insert_dev(target, ul1, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].m(ul1, null);
@@ -1805,19 +2265,19 @@ var app = (function () {
     			current = true;
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*departures*/ 2) {
-    				each_value_1 = /*departures*/ ctx[1].past;
+    			if (dirty & /*routeStatusPromise*/ 1) {
+    				each_value_1 = /*routeStatus*/ ctx[6].past;
     				validate_each_argument(each_value_1);
     				let i;
 
     				for (i = 0; i < each_value_1.length; i += 1) {
-    					const child_ctx = get_each_context_1$1(ctx, each_value_1, i);
+    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
 
     					if (each_blocks_1[i]) {
     						each_blocks_1[i].p(child_ctx, dirty);
     						transition_in(each_blocks_1[i], 1);
     					} else {
-    						each_blocks_1[i] = create_each_block_1$1(child_ctx);
+    						each_blocks_1[i] = create_each_block_1(child_ctx);
     						each_blocks_1[i].c();
     						transition_in(each_blocks_1[i], 1);
     						each_blocks_1[i].m(ul0, null);
@@ -1833,8 +2293,8 @@ var app = (function () {
     				check_outros();
     			}
 
-    			if (dirty & /*departures*/ 2) {
-    				each_value = /*departures*/ ctx[1].future;
+    			if (dirty & /*routeStatusPromise*/ 1) {
+    				each_value = /*routeStatus*/ ctx[6].future;
     				validate_each_argument(each_value);
     				let i;
 
@@ -1863,11 +2323,12 @@ var app = (function () {
     		},
     		i: function intro(local) {
     			if (current) return;
-    			transition_in(backbutton.$$.fragment, local);
 
     			for (let i = 0; i < each_value_1.length; i += 1) {
     				transition_in(each_blocks_1[i]);
     			}
+
+    			transition_in(clock.$$.fragment, local);
 
     			for (let i = 0; i < each_value.length; i += 1) {
     				transition_in(each_blocks[i]);
@@ -1876,13 +2337,13 @@ var app = (function () {
     			current = true;
     		},
     		o: function outro(local) {
-    			transition_out(backbutton.$$.fragment, local);
     			each_blocks_1 = each_blocks_1.filter(Boolean);
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
     				transition_out(each_blocks_1[i]);
     			}
 
+    			transition_out(clock.$$.fragment, local);
     			each_blocks = each_blocks.filter(Boolean);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -1892,32 +2353,34 @@ var app = (function () {
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			destroy_component(backbutton, detaching);
-    			if (detaching) detach_dev(t0);
-    			if (detaching) detach_dev(section);
+    			if (detaching) detach_dev(ul0);
     			destroy_each(each_blocks_1, detaching);
+    			if (detaching) detach_dev(t0);
+    			destroy_component(clock, detaching);
+    			if (detaching) detach_dev(t1);
+    			if (detaching) detach_dev(ul1);
     			destroy_each(each_blocks, detaching);
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block$2.name,
-    		type: "if",
-    		source: "(43:2) {#if selectedRouteParser && departures }",
+    		id: create_then_block.name,
+    		type: "then",
+    		source: "(52:4) {:then routeStatus}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (47:8) {#each departures.past as pastDeparture}
-    function create_each_block_1$1(ctx) {
+    // (54:10) {#each routeStatus.past as pastDeparture}
+    function create_each_block_1(ctx) {
     	let pastdepaturelistview;
     	let current;
 
     	pastdepaturelistview = new PastDepatureListView({
-    			props: { departure: /*pastDeparture*/ ctx[6] },
+    			props: { departure: /*pastDeparture*/ ctx[10] },
     			$$inline: true
     		});
 
@@ -1929,11 +2392,7 @@ var app = (function () {
     			mount_component(pastdepaturelistview, target, anchor);
     			current = true;
     		},
-    		p: function update(ctx, dirty) {
-    			const pastdepaturelistview_changes = {};
-    			if (dirty & /*departures*/ 2) pastdepaturelistview_changes.departure = /*pastDeparture*/ ctx[6];
-    			pastdepaturelistview.$set(pastdepaturelistview_changes);
-    		},
+    		p: noop,
     		i: function intro(local) {
     			if (current) return;
     			transition_in(pastdepaturelistview.$$.fragment, local);
@@ -1950,22 +2409,22 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_each_block_1$1.name,
+    		id: create_each_block_1.name,
     		type: "each",
-    		source: "(47:8) {#each departures.past as pastDeparture}",
+    		source: "(54:10) {#each routeStatus.past as pastDeparture}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (53:8) {#each departures.future as futureDeparture}
+    // (60:10) {#each routeStatus.future as futureDeparture}
     function create_each_block$1(ctx) {
     	let futuredeparturelistview;
     	let current;
 
     	futuredeparturelistview = new FutureDepatureListView({
-    			props: { departure: /*futureDeparture*/ ctx[3] },
+    			props: { departure: /*futureDeparture*/ ctx[7] },
     			$$inline: true
     		});
 
@@ -1977,11 +2436,7 @@ var app = (function () {
     			mount_component(futuredeparturelistview, target, anchor);
     			current = true;
     		},
-    		p: function update(ctx, dirty) {
-    			const futuredeparturelistview_changes = {};
-    			if (dirty & /*departures*/ 2) futuredeparturelistview_changes.departure = /*futureDeparture*/ ctx[3];
-    			futuredeparturelistview.$set(futuredeparturelistview_changes);
-    		},
+    		p: noop,
     		i: function intro(local) {
     			if (current) return;
     			transition_in(futuredeparturelistview.$$.fragment, local);
@@ -2000,96 +2455,140 @@ var app = (function () {
     		block,
     		id: create_each_block$1.name,
     		type: "each",
-    		source: "(53:8) {#each departures.future as futureDeparture}",
+    		source: "(60:10) {#each routeStatus.future as futureDeparture}",
     		ctx
     	});
 
     	return block;
     }
 
-    function create_fragment$5(ctx) {
-    	let section;
-    	let header;
-    	let t1;
-    	let current_block_type_index;
-    	let if_block;
-    	let current;
-    	const if_block_creators = [create_if_block$2, create_else_block$2];
-    	const if_blocks = [];
-
-    	function select_block_type(ctx, dirty) {
-    		if (/*selectedRouteParser*/ ctx[0] && /*departures*/ ctx[1]) return 0;
-    		return 1;
-    	}
-
-    	current_block_type_index = select_block_type(ctx);
-    	if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+    // (50:31)        <p>Awaiting Route data...</p>     {:then routeStatus}
+    function create_pending_block(ctx) {
+    	let p;
 
     	const block = {
     		c: function create() {
-    			section = element("section");
-    			header = element("header");
-    			header.textContent = "When?";
-    			t1 = space();
-    			if_block.c();
-    			attr_dev(header, "class", "svelte-ghxnv8");
-    			add_location(header, file$5, 41, 2, 889);
-    			attr_dev(section, "class", "routeViewer svelte-ghxnv8");
-    			add_location(section, file$5, 40, 0, 857);
-    		},
-    		l: function claim(nodes) {
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    			p = element("p");
+    			p.textContent = "Awaiting Route data...";
+    			add_location(p, file$7, 50, 6, 1286);
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, section, anchor);
-    			append_dev(section, header);
-    			append_dev(section, t1);
-    			if_blocks[current_block_type_index].m(section, null);
-    			current = true;
+    			insert_dev(target, p, anchor);
     		},
-    		p: function update(ctx, [dirty]) {
-    			let previous_block_index = current_block_type_index;
-    			current_block_type_index = select_block_type(ctx);
-
-    			if (current_block_type_index === previous_block_index) {
-    				if_blocks[current_block_type_index].p(ctx, dirty);
-    			} else {
-    				group_outros();
-
-    				transition_out(if_blocks[previous_block_index], 1, 1, () => {
-    					if_blocks[previous_block_index] = null;
-    				});
-
-    				check_outros();
-    				if_block = if_blocks[current_block_type_index];
-
-    				if (!if_block) {
-    					if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
-    					if_block.c();
-    				}
-
-    				transition_in(if_block, 1);
-    				if_block.m(section, null);
-    			}
-    		},
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(if_block);
-    			current = true;
-    		},
-    		o: function outro(local) {
-    			transition_out(if_block);
-    			current = false;
-    		},
+    		p: noop,
+    		i: noop,
+    		o: noop,
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(section);
-    			if_blocks[current_block_type_index].d();
+    			if (detaching) detach_dev(p);
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$5.name,
+    		id: create_pending_block.name,
+    		type: "pending",
+    		source: "(50:31)        <p>Awaiting Route data...</p>     {:then routeStatus}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$7(ctx) {
+    	let section1;
+    	let header;
+    	let t1;
+    	let backbutton;
+    	let t2;
+    	let section0;
+    	let promise;
+    	let current;
+    	backbutton = new BackButton({ $$inline: true });
+    	backbutton.$on("backButton", /*backButton_handler*/ ctx[4]);
+
+    	let info = {
+    		ctx,
+    		current: null,
+    		token: null,
+    		pending: create_pending_block,
+    		then: create_then_block,
+    		catch: create_catch_block,
+    		value: 6,
+    		error: 13,
+    		blocks: [,,,]
+    	};
+
+    	handle_promise(promise = /*routeStatusPromise*/ ctx[0], info);
+
+    	const block = {
+    		c: function create() {
+    			section1 = element("section");
+    			header = element("header");
+    			header.textContent = "When?";
+    			t1 = space();
+    			create_component(backbutton.$$.fragment);
+    			t2 = space();
+    			section0 = element("section");
+    			info.block.c();
+    			attr_dev(header, "class", "svelte-18kan3u");
+    			add_location(header, file$7, 46, 2, 1167);
+    			attr_dev(section0, "class", "routes svelte-18kan3u");
+    			add_location(section0, file$7, 48, 2, 1223);
+    			attr_dev(section1, "class", "routeViewer svelte-18kan3u");
+    			add_location(section1, file$7, 45, 0, 1135);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, section1, anchor);
+    			append_dev(section1, header);
+    			append_dev(section1, t1);
+    			mount_component(backbutton, section1, null);
+    			append_dev(section1, t2);
+    			append_dev(section1, section0);
+    			info.block.m(section0, info.anchor = null);
+    			info.mount = () => section0;
+    			info.anchor = null;
+    			current = true;
+    		},
+    		p: function update(new_ctx, [dirty]) {
+    			ctx = new_ctx;
+
+    			{
+    				const child_ctx = ctx.slice();
+    				child_ctx[6] = info.resolved;
+    				info.block.p(child_ctx, dirty);
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(backbutton.$$.fragment, local);
+    			transition_in(info.block);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(backbutton.$$.fragment, local);
+
+    			for (let i = 0; i < 3; i += 1) {
+    				const block = info.blocks[i];
+    				transition_out(block);
+    			}
+
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(section1);
+    			destroy_component(backbutton);
+    			info.block.d();
+    			info.token = null;
+    			info = null;
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$7.name,
     		type: "component",
     		source: "",
     		ctx
@@ -2098,11 +2597,13 @@ var app = (function () {
     	return block;
     }
 
-    function instance$5($$self, $$props, $$invalidate) {
-    	
-    	let { selectedRouteParser } = $$props;
-    	let departures;
-    	const writable_props = ["selectedRouteParser"];
+    function instance$7($$self, $$props, $$invalidate) {
+    	let { originCode } = $$props;
+    	let { destinationCode } = $$props;
+    	let routeStatusPromise = routeStatus(originCode, destinationCode);
+    	const nowStr = new Date().toLocaleString("en-US", { timeZone: "America/Vancouver" });
+    	const now = new Date(nowStr).getTime();
+    	const writable_props = ["originCode", "destinationCode"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<RouteViewer> was created with unknown prop '${key}'`);
@@ -2116,367 +2617,195 @@ var app = (function () {
     	}
 
     	$$self.$$set = $$props => {
-    		if ("selectedRouteParser" in $$props) $$invalidate(0, selectedRouteParser = $$props.selectedRouteParser);
+    		if ("originCode" in $$props) $$invalidate(2, originCode = $$props.originCode);
+    		if ("destinationCode" in $$props) $$invalidate(3, destinationCode = $$props.destinationCode);
     	};
 
     	$$self.$capture_state = () => ({
     		BackButton,
     		PastDepatureListView,
     		FutureDepartureListView: FutureDepatureListView,
-    		selectedRouteParser,
-    		departures
+    		routeStaus: routeStatus,
+    		Clock,
+    		originCode,
+    		destinationCode,
+    		routeStatusPromise,
+    		nowStr,
+    		now
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("selectedRouteParser" in $$props) $$invalidate(0, selectedRouteParser = $$props.selectedRouteParser);
-    		if ("departures" in $$props) $$invalidate(1, departures = $$props.departures);
+    		if ("originCode" in $$props) $$invalidate(2, originCode = $$props.originCode);
+    		if ("destinationCode" in $$props) $$invalidate(3, destinationCode = $$props.destinationCode);
+    		if ("routeStatusPromise" in $$props) $$invalidate(0, routeStatusPromise = $$props.routeStatusPromise);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*selectedRouteParser*/ 1) {
-    			 {
-    				if (typeof selectedRouteParser.departures === "function") {
-    					$$invalidate(1, departures = selectedRouteParser.departures());
-    				}
-    			}
-    		}
-    	};
-
-    	return [selectedRouteParser, departures, backButton_handler];
+    	return [routeStatusPromise, now, originCode, destinationCode, backButton_handler];
     }
 
     class RouteViewer extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$5, create_fragment$5, safe_not_equal, { selectedRouteParser: 0 });
+    		init(this, options, instance$7, create_fragment$7, safe_not_equal, { originCode: 2, destinationCode: 3 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "RouteViewer",
     			options,
-    			id: create_fragment$5.name
+    			id: create_fragment$7.name
     		});
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
-    		if (/*selectedRouteParser*/ ctx[0] === undefined && !("selectedRouteParser" in props)) {
-    			console.warn("<RouteViewer> was created without expected prop 'selectedRouteParser'");
+    		if (/*originCode*/ ctx[2] === undefined && !("originCode" in props)) {
+    			console.warn("<RouteViewer> was created without expected prop 'originCode'");
+    		}
+
+    		if (/*destinationCode*/ ctx[3] === undefined && !("destinationCode" in props)) {
+    			console.warn("<RouteViewer> was created without expected prop 'destinationCode'");
     		}
     	}
 
-    	get selectedRouteParser() {
+    	get originCode() {
     		throw new Error("<RouteViewer>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	set selectedRouteParser(value) {
+    	set originCode(value) {
+    		throw new Error("<RouteViewer>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get destinationCode() {
+    		throw new Error("<RouteViewer>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set destinationCode(value) {
     		throw new Error("<RouteViewer>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
-    const request = async (method, url, params) => {
-        console.log(`Communicator#request`);
-        const fetch_options = Object.assign({ method: method }, params);
-        console.log(`Communicator#request  request: ${method}: ${url}`, fetch_options);
-        // return fetch(url, fetch_options)
-        let response = await fetch(url, fetch_options);
-        let networkAttempts = 0;
-        while (networkAttempts < 5) {
-            console.log(`Communicator#request  Requesting...`);
-            if (response.status !== 200) {
-                networkAttempts = networkAttempts + 1;
-                console.log(`Communicator#request  Error detected, retry #${networkAttempts}`);
-                response = await request(method, url, params);
-            }
-            else {
-                console.log(`Communicator#request  Reponse valid`);
-                break;
-            }
-        }
-        return response;
-    };
-    const Communicator = {
-        getAllRoutes: async () => {
-            console.log(`Communicator#getAllRoutes  Contacting berries...`);
-            let response = await request('GET', '/api/small', {});
-            if (response.status === 200) {
-                console.log(`Communicator#getAllRoutes  Results valid, returning restults`);
-                const parsedJson = await response.json();
-                return JSON.parse(parsedJson["page"]);
-            }
-            else {
-                console.log(`Communicator#getAllRoutes  Something wrong, return empty array`);
-                return [];
-            }
-        },
-        getRouteInfo: async (uri) => {
-            console.log(`Communicator#getRouteInfo  fetching route: ${uri}`);
-            let response = await request('GET', `/api/current-conditions/${uri}`, {});
-            if (response.status === 200) {
-                console.log(`Communicator#getRouteInfo  Results valid, returning restults`);
-                const parsedJson = await response.json();
-                return parsedJson["page"];
-            }
-            else {
-                console.log(`Communicator#getRouteInfo  Something wrong, return empty array`);
-                return '';
-            }
-        }
-    };
-
-    const cleanString = (str) => {
-        console.log(`cleanString():`, str);
-        if (str) {
-            return str.trim().replace(/\r?\n|\r|/g, '').replace(/  +/g, ' ');
-        }
-        return '';
-    };
-    // const parking available = querySelector('.t-parking-padding').querySelector('header').textContent.trim().replace(/\r?\n|\r|/g,'').replace(/  +/g, ' ')
-    // const sailingDuration = tableRows[0].querySelector('b').textContent.trim()
-    const RoutePageParser = (page) => {
-        console.log(`RoutePageParser:`, page);
-        let parser = new DOMParser();
-        const doc = parser.parseFromString(page, "text/html");
-        console.log(`RoutePageParser doc:`, doc);
-        const parseTime = (fullTimeString) => {
-            console.log(`parseTime(${fullTimeString})`);
-            const [timeString, meridiem] = fullTimeString.split(' ');
-            let [hours, minutes] = timeString.split(':').map((x) => parseInt(x));
-            if (meridiem.toUpperCase() === 'PM') {
-                console.log('its pm');
-                hours = hours + 12;
-            }
-            const nowStr = new Date().toLocaleString("en-US", { timeZone: "America/Vancouver" });
-            console.log('whats anowstr', nowStr);
-            const now = new Date(nowStr);
-            console.log('now:', now);
-            const timeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-            console.log(`Today at ${hours} ${minutes}: `, timeToday);
-            return timeToday.getTime();
-        };
-        const parsePastStatus = (statusString) => {
-            const [status, timeStr, meridiem] = statusString.split(' ');
-            const time = parseTime(`${timeStr} ${meridiem}`);
-            return {
-                status: status.slice(0, -1),
-                time: time
-            };
-        };
-        const parseFutureStatus = (statusString) => {
-            const [percentStr, _availableStr] = statusString.split(' ');
-            return {
-                percentAvailable: parseInt(percentStr.slice(0, -1))
-            };
-        };
-        const parsePercent = (percentString) => {
-            if (percentString && percentString.length > 2) {
-                parseInt(percentString.slice(0, -1));
-            }
-            return undefined;
-        };
-        const departures = () => {
-            let departures = {
-                future: [],
-                past: []
-            };
-            const departuresTable = doc.querySelector('.detail-departure-table');
-            if (departuresTable) {
-                const tableRows = departuresTable.querySelectorAll('tr');
-                for (let i = 0; i < tableRows.length; i++) {
-                    console.log(`RoutePageParser#departures  tableRow[${i}]`);
-                    if (i < 2) {
-                        console.log('RoutePageParser#departures  skip row');
-                        continue;
-                    }
-                    let tableRow = tableRows[i];
-                    if (!tableRow.classList.contains('toggle-div')) {
-                        console.log(`RoutePageParser#departures  row should contain time and status`);
-                        // describes a departure
-                        const [timeElement, statusElement, togglerElement] = Array.from(tableRow.querySelectorAll('td'));
-                        const timeString = cleanString(timeElement.textContent);
-                        const statusString = cleanString(statusElement.textContent);
-                        if (togglerElement.classList.contains('toggle-arrow')) {
-                            console.log('RoutePageParser#departures  row has further info');
-                            // a future departure
-                            const extraInfo = tableRows[i + 1];
-                            console.log('RoutePageParser#departures  further info should be here:', extraInfo);
-                            const ferryData = extraInfo.querySelector('.sailing-ferry-name');
-                            const deckSpaceData = extraInfo.querySelector('#deckSpace');
-                            let deckSpaceObject;
-                            if (deckSpaceData) {
-                                const [totalSpace, standardSpace, mixedSpace] = Array.from(deckSpaceData.querySelectorAll('.progress-bar'));
-                                deckSpaceObject = {
-                                    total: parsePercent(cleanString(totalSpace === null || totalSpace === void 0 ? void 0 : totalSpace.textContent)),
-                                    standard: parsePercent(cleanString(standardSpace === null || standardSpace === void 0 ? void 0 : standardSpace.textContent)),
-                                    mixed: parsePercent(cleanString(mixedSpace === null || mixedSpace === void 0 ? void 0 : mixedSpace.textContent))
-                                };
-                            }
-                            else {
-                                deckSpaceObject = {};
-                            }
-                            const futureDeparture = {
-                                time: parseTime(cleanString(timeElement.textContent)),
-                                status: parseFutureStatus(cleanString(statusElement.textContent)),
-                                ferry: {
-                                    name: cleanString((ferryData === null || ferryData === void 0 ? void 0 : ferryData.textContent) || null),
-                                    url: (ferryData === null || ferryData === void 0 ? void 0 : ferryData.getAttribute("href")) || ''
-                                },
-                                deckSpace: deckSpaceObject
-                            };
-                            departures.future.push(futureDeparture);
-                        }
-                        else {
-                            console.log('RoutePageParser#departures no toggle arrow, its a past departure');
-                            // a past departure
-                            departures.past.push({
-                                time: parseTime(timeString),
-                                status: parsePastStatus(statusString)
-                            });
-                        }
-                    }
-                }
-            }
-            else {
-                departures = {
-                    future: [],
-                    past: []
-                };
-            }
-            return departures;
-        };
-        return {
-            departures: departures
-        };
-    };
-
     /* src/App.svelte generated by Svelte v3.24.1 */
+    const file$8 = "src/App.svelte";
 
-    const { Object: Object_1$1, console: console_1$2 } = globals;
-    const file$6 = "src/App.svelte";
-
-    // (121:6) {:else}
-    function create_else_block$3(ctx) {
-    	let routeselector;
-    	let updating_routesData;
-    	let updating_origin;
-    	let updating_destination;
+    // (88:6) {:else}
+    function create_else_block(ctx) {
+    	let portlist;
     	let current;
 
-    	function routeselector_routesData_binding(value) {
-    		/*routeselector_routesData_binding*/ ctx[7].call(null, value);
-    	}
-
-    	function routeselector_origin_binding(value) {
-    		/*routeselector_origin_binding*/ ctx[8].call(null, value);
-    	}
-
-    	function routeselector_destination_binding(value) {
-    		/*routeselector_destination_binding*/ ctx[9].call(null, value);
-    	}
-
-    	let routeselector_props = {};
-
-    	if (/*routesData*/ ctx[2] !== void 0) {
-    		routeselector_props.routesData = /*routesData*/ ctx[2];
-    	}
-
-    	if (/*origin*/ ctx[0] !== void 0) {
-    		routeselector_props.origin = /*origin*/ ctx[0];
-    	}
-
-    	if (/*destination*/ ctx[1] !== void 0) {
-    		routeselector_props.destination = /*destination*/ ctx[1];
-    	}
-
-    	routeselector = new RouteSelector({
-    			props: routeselector_props,
+    	portlist = new PortList({
+    			props: { title: "Origin?" },
     			$$inline: true
     		});
 
-    	binding_callbacks.push(() => bind(routeselector, "routesData", routeselector_routesData_binding));
-    	binding_callbacks.push(() => bind(routeselector, "origin", routeselector_origin_binding));
-    	binding_callbacks.push(() => bind(routeselector, "destination", routeselector_destination_binding));
-    	routeselector.$on("backButton", /*onBackButton*/ ctx[5]);
+    	portlist.$on("portSelected", /*portSelected_handler_1*/ ctx[4]);
 
     	const block = {
     		c: function create() {
-    			create_component(routeselector.$$.fragment);
+    			create_component(portlist.$$.fragment);
     		},
     		m: function mount(target, anchor) {
-    			mount_component(routeselector, target, anchor);
+    			mount_component(portlist, target, anchor);
     			current = true;
     		},
-    		p: function update(ctx, dirty) {
-    			const routeselector_changes = {};
-
-    			if (!updating_routesData && dirty & /*routesData*/ 4) {
-    				updating_routesData = true;
-    				routeselector_changes.routesData = /*routesData*/ ctx[2];
-    				add_flush_callback(() => updating_routesData = false);
-    			}
-
-    			if (!updating_origin && dirty & /*origin*/ 1) {
-    				updating_origin = true;
-    				routeselector_changes.origin = /*origin*/ ctx[0];
-    				add_flush_callback(() => updating_origin = false);
-    			}
-
-    			if (!updating_destination && dirty & /*destination*/ 2) {
-    				updating_destination = true;
-    				routeselector_changes.destination = /*destination*/ ctx[1];
-    				add_flush_callback(() => updating_destination = false);
-    			}
-
-    			routeselector.$set(routeselector_changes);
-    		},
+    		p: noop,
     		i: function intro(local) {
     			if (current) return;
-    			transition_in(routeselector.$$.fragment, local);
+    			transition_in(portlist.$$.fragment, local);
     			current = true;
     		},
     		o: function outro(local) {
-    			transition_out(routeselector.$$.fragment, local);
+    			transition_out(portlist.$$.fragment, local);
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			destroy_component(routeselector, detaching);
+    			destroy_component(portlist, detaching);
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$3.name,
+    		id: create_else_block.name,
     		type: "else",
-    		source: "(121:6) {:else}",
+    		source: "(88:6) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (119:6) {#if routeIsSelected && selectedRouteParser }
-    function create_if_block$3(ctx) {
-    	let routeviewer;
-    	let updating_selectedRouteParser;
+    // (80:27) 
+    function create_if_block_1(ctx) {
+    	let portlist;
     	let current;
 
-    	function routeviewer_selectedRouteParser_binding(value) {
-    		/*routeviewer_selectedRouteParser_binding*/ ctx[6].call(null, value);
-    	}
+    	portlist = new PortList({
+    			props: {
+    				filter: /*originCode*/ ctx[0],
+    				title: "Destination?",
+    				backButton: true
+    			},
+    			$$inline: true
+    		});
 
-    	let routeviewer_props = {};
+    	portlist.$on("portSelected", /*portSelected_handler*/ ctx[3]);
+    	portlist.$on("backButton", /*onBackButton*/ ctx[2]);
 
-    	if (/*selectedRouteParser*/ ctx[3] !== void 0) {
-    		routeviewer_props.selectedRouteParser = /*selectedRouteParser*/ ctx[3];
-    	}
+    	const block = {
+    		c: function create() {
+    			create_component(portlist.$$.fragment);
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(portlist, target, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			const portlist_changes = {};
+    			if (dirty & /*originCode*/ 1) portlist_changes.filter = /*originCode*/ ctx[0];
+    			portlist.$set(portlist_changes);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(portlist.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(portlist.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(portlist, detaching);
+    		}
+    	};
 
-    	routeviewer = new RouteViewer({ props: routeviewer_props, $$inline: true });
-    	binding_callbacks.push(() => bind(routeviewer, "selectedRouteParser", routeviewer_selectedRouteParser_binding));
-    	routeviewer.$on("backButton", /*onBackButton*/ ctx[5]);
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1.name,
+    		type: "if",
+    		source: "(80:27) ",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (78:6) {#if originCode && destinationCode}
+    function create_if_block$2(ctx) {
+    	let routeviewer;
+    	let current;
+
+    	routeviewer = new RouteViewer({
+    			props: {
+    				originCode: /*originCode*/ ctx[0],
+    				destinationCode: /*destinationCode*/ ctx[1]
+    			},
+    			$$inline: true
+    		});
+
+    	routeviewer.$on("backButton", /*onBackButton*/ ctx[2]);
 
     	const block = {
     		c: function create() {
@@ -2488,13 +2817,8 @@ var app = (function () {
     		},
     		p: function update(ctx, dirty) {
     			const routeviewer_changes = {};
-
-    			if (!updating_selectedRouteParser && dirty & /*selectedRouteParser*/ 8) {
-    				updating_selectedRouteParser = true;
-    				routeviewer_changes.selectedRouteParser = /*selectedRouteParser*/ ctx[3];
-    				add_flush_callback(() => updating_selectedRouteParser = false);
-    			}
-
+    			if (dirty & /*originCode*/ 1) routeviewer_changes.originCode = /*originCode*/ ctx[0];
+    			if (dirty & /*destinationCode*/ 2) routeviewer_changes.destinationCode = /*destinationCode*/ ctx[1];
     			routeviewer.$set(routeviewer_changes);
     		},
     		i: function intro(local) {
@@ -2513,16 +2837,16 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block$3.name,
+    		id: create_if_block$2.name,
     		type: "if",
-    		source: "(119:6) {#if routeIsSelected && selectedRouteParser }",
+    		source: "(78:6) {#if originCode && destinationCode}",
     		ctx
     	});
 
     	return block;
     }
 
-    function create_fragment$6(ctx) {
+    function create_fragment$8(ctx) {
     	let div;
     	let header;
     	let t1;
@@ -2531,12 +2855,13 @@ var app = (function () {
     	let current_block_type_index;
     	let if_block;
     	let current;
-    	const if_block_creators = [create_if_block$3, create_else_block$3];
+    	const if_block_creators = [create_if_block$2, create_if_block_1, create_else_block];
     	const if_blocks = [];
 
     	function select_block_type(ctx, dirty) {
-    		if (/*routeIsSelected*/ ctx[4] && /*selectedRouteParser*/ ctx[3]) return 0;
-    		return 1;
+    		if (/*originCode*/ ctx[0] && /*destinationCode*/ ctx[1]) return 0;
+    		if (/*originCode*/ ctx[0]) return 1;
+    		return 2;
     	}
 
     	current_block_type_index = select_block_type(ctx);
@@ -2551,14 +2876,14 @@ var app = (function () {
     			main = element("main");
     			section = element("section");
     			if_block.c();
-    			attr_dev(header, "class", "svelte-1di0g8p");
-    			add_location(header, file$6, 113, 2, 3646);
-    			attr_dev(section, "class", "svelte-1di0g8p");
-    			add_location(section, file$6, 117, 4, 3698);
-    			attr_dev(main, "class", "svelte-1di0g8p");
-    			add_location(main, file$6, 116, 2, 3687);
-    			attr_dev(div, "class", "root svelte-1di0g8p");
-    			add_location(div, file$6, 112, 0, 3625);
+    			attr_dev(header, "class", "svelte-19377lf");
+    			add_location(header, file$8, 72, 2, 1853);
+    			attr_dev(section, "class", "svelte-19377lf");
+    			add_location(section, file$8, 76, 4, 1905);
+    			attr_dev(main, "class", "svelte-19377lf");
+    			add_location(main, file$8, 75, 2, 1894);
+    			attr_dev(div, "class", "root svelte-19377lf");
+    			add_location(div, file$8, 71, 0, 1832);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2614,7 +2939,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$6.name,
+    		id: create_fragment$8.name,
     		type: "component",
     		source: "",
     		ctx
@@ -2623,188 +2948,65 @@ var app = (function () {
     	return block;
     }
 
-    function instance$6($$self, $$props, $$invalidate) {
-    	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-    		function adopt(value) {
-    			return value instanceof P
-    			? value
-    			: new P(function (resolve) {
-    						resolve(value);
-    					});
-    		}
-
-    		return new (P || (P = Promise))(function (resolve, reject) {
-    				function fulfilled(value) {
-    					try {
-    						step(generator.next(value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function rejected(value) {
-    					try {
-    						step(generator["throw"](value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function step(result) {
-    					result.done
-    					? resolve(result.value)
-    					: adopt(result.value).then(fulfilled, rejected);
-    				}
-
-    				step((generator = generator.apply(thisArg, _arguments || [])).next());
-    			});
-    	};
-
-    	
-    	let origin = {};
-    	let destination = {};
-    	let routesData = [];
-    	let selectedRouteParser = {};
-
-    	const objectIsEmpty = obj => {
-    		return Object.keys(obj).length === 0 && obj.constructor === Object;
-    	};
-
-    	let routeIsSelected = false;
+    function instance$8($$self, $$props, $$invalidate) {
+    	let originCode;
+    	let destinationCode;
 
     	const onBackButton = _e => {
-    		if (routeIsSelected && selectedRouteParser) {
-    			$$invalidate(4, routeIsSelected = false);
-    			$$invalidate(3, selectedRouteParser = {});
-    			$$invalidate(1, destination = {});
-    		}
-
-    		if (origin) {
-    			$$invalidate(0, origin = {});
+    		if (destinationCode) {
+    			$$invalidate(1, destinationCode = "");
+    		} else {
+    			$$invalidate(0, originCode = "");
     		}
     	};
-
-    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		console.log(`App#onMount`);
-
-    		if (routesData.length === 0) {
-    			Communicator.getAllRoutes().then(newRoutesData => {
-    				console.log(`App#onMount  got routes, set them as routesData...`);
-    				$$invalidate(2, routesData = newRoutesData);
-    			});
-    		}
-    	}));
 
     	const writable_props = [];
 
-    	Object_1$1.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$2.warn(`<App> was created with unknown prop '${key}'`);
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<App> was created with unknown prop '${key}'`);
     	});
 
     	let { $$slots = {}, $$scope } = $$props;
     	validate_slots("App", $$slots, []);
-
-    	function routeviewer_selectedRouteParser_binding(value) {
-    		selectedRouteParser = value;
-    		((($$invalidate(3, selectedRouteParser), $$invalidate(4, routeIsSelected)), $$invalidate(0, origin)), $$invalidate(1, destination));
-    	}
-
-    	function routeselector_routesData_binding(value) {
-    		routesData = value;
-    		$$invalidate(2, routesData);
-    	}
-
-    	function routeselector_origin_binding(value) {
-    		origin = value;
-    		$$invalidate(0, origin);
-    	}
-
-    	function routeselector_destination_binding(value) {
-    		destination = value;
-    		$$invalidate(1, destination);
-    	}
+    	const portSelected_handler = e => $$invalidate(1, destinationCode = e.detail);
+    	const portSelected_handler_1 = e => $$invalidate(0, originCode = e.detail);
 
     	$$self.$capture_state = () => ({
-    		__awaiter,
-    		onMount,
-    		RouteSelector,
+    		PortList,
     		RouteViewer,
-    		BackButton,
-    		Communicator,
-    		routePageParser: RoutePageParser,
-    		origin,
-    		destination,
-    		routesData,
-    		selectedRouteParser,
-    		objectIsEmpty,
-    		routeIsSelected,
+    		originCode,
+    		destinationCode,
     		onBackButton
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
-    		if ("origin" in $$props) $$invalidate(0, origin = $$props.origin);
-    		if ("destination" in $$props) $$invalidate(1, destination = $$props.destination);
-    		if ("routesData" in $$props) $$invalidate(2, routesData = $$props.routesData);
-    		if ("selectedRouteParser" in $$props) $$invalidate(3, selectedRouteParser = $$props.selectedRouteParser);
-    		if ("routeIsSelected" in $$props) $$invalidate(4, routeIsSelected = $$props.routeIsSelected);
+    		if ("originCode" in $$props) $$invalidate(0, originCode = $$props.originCode);
+    		if ("destinationCode" in $$props) $$invalidate(1, destinationCode = $$props.destinationCode);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*origin, destination*/ 3) {
-    			 {
-    				console.log("Either origin or destination changed...");
-
-    				if (!objectIsEmpty(origin) && !objectIsEmpty(destination)) {
-    					$$invalidate(4, routeIsSelected = true);
-    				}
-    			}
-    		}
-
-    		if ($$self.$$.dirty & /*routeIsSelected, origin, destination*/ 19) {
-    			 {
-    				console.log("App#Reacting  to something");
-
-    				if (routeIsSelected) {
-    					console.log("App#Reacting  routeIsSelected, get and parse route info...");
-
-    					Communicator.getRouteInfo(`${origin["travelRouteName"]}-${destination["travelRouteName"]}/${origin["code"]}-${destination["code"]}`).then(response => {
-    						console.log("App#Reacting  got the response, parse it");
-    						$$invalidate(3, selectedRouteParser = RoutePageParser(response));
-    					});
-    				}
-    			}
-    		}
-    	};
-
     	return [
-    		origin,
-    		destination,
-    		routesData,
-    		selectedRouteParser,
-    		routeIsSelected,
+    		originCode,
+    		destinationCode,
     		onBackButton,
-    		routeviewer_selectedRouteParser_binding,
-    		routeselector_routesData_binding,
-    		routeselector_origin_binding,
-    		routeselector_destination_binding
+    		portSelected_handler,
+    		portSelected_handler_1
     	];
     }
 
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$6, create_fragment$6, safe_not_equal, {});
+    		init(this, options, instance$8, create_fragment$8, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "App",
     			options,
-    			id: create_fragment$6.name
+    			id: create_fragment$8.name
     		});
     	}
     }

@@ -4,7 +4,7 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules/*", "__sapper__/*", "public/*"],
   "compilerOptions": {
-    "lib": [ "es2015", "dom" ],
+    "lib": [ "es2019", "dom" ],
     "strictNullChecks": true,
   },
 }

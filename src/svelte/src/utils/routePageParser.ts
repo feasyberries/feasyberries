@@ -6,7 +6,7 @@ import type {
 } from './FeasyInterfaces'
 
 const cleanString = (str: string | null): string => {
-  console.log(`cleanString():`, str)
+  // console.log(`cleanString():`, str)
   if (str) {
     return str.trim().replace(/\r?\n|\r|/g,'').replace(/  +/g, ' ')
   }
@@ -17,18 +17,18 @@ const cleanString = (str: string | null): string => {
 // const sailingDuration = tableRows[0].querySelector('b').textContent.trim()
 
 const RoutePageParser = (page: string) => {
-  console.log(`RoutePageParser:`, page)
+  // console.log(`RoutePageParser:`, page)
   let parser = new DOMParser()
   const doc = parser.parseFromString(page, "text/html")
-  console.log(`RoutePageParser doc:`, doc)
+  // console.log(`RoutePageParser doc:`, doc)
   const parseTime = (fullTimeString: string): number => {
-    console.log(`parseTime(${fullTimeString})`)
+    // console.log(`parseTime(${fullTimeString})`)
     const [timeString, meridiem] = fullTimeString.split(' ')
     let [hours, minutes] = timeString.split(':').map(
       (x: string): number => parseInt(x)
     )
-    if (meridiem.toUpperCase() === 'PM') {
-      console.log('its pm')
+    if (meridiem.toUpperCase() === 'PM' && hours !== 12) {
+      // console.log('its pm')
       hours = hours + 12
     }
 
@@ -36,9 +36,9 @@ const RoutePageParser = (page: string) => {
       "en-US",
       { timeZone: "America/Vancouver" }
     )
-    console.log('whats anowstr', nowStr)
+    // console.log('whats anowstr', nowStr)
     const now = new Date(nowStr)
-    console.log('now:', now)
+    // console.log('now:', now)
     const timeToday = new Date(
       now.getFullYear(),
       now.getMonth(),
@@ -46,12 +46,13 @@ const RoutePageParser = (page: string) => {
       hours,
       minutes
     )
-    console.log(`Today at ${hours} ${minutes}: `, timeToday)
+    // console.log(`Today at ${hours} ${minutes}: `, timeToday)
     return timeToday.getTime()
   }
 
   const parsePastStatus = (statusString: string): PastStatus => {
     const [status, timeStr, meridiem] = statusString.split(' ')
+    console.log(`arsing past status time, parseTime(${timeStr} ${meridiem})`)
     const time = parseTime(`${timeStr} ${meridiem}`)
     return {
       status: status.slice(0, -1), // removes colon
@@ -68,7 +69,7 @@ const RoutePageParser = (page: string) => {
 
   const parsePercent = (percentString: string): number | undefined => {
     if (percentString && percentString.length > 2) {
-      parseInt(percentString.slice(0, -1))
+      return parseInt(percentString.slice(0, -1))
     }
     return undefined
   }
@@ -82,14 +83,14 @@ const RoutePageParser = (page: string) => {
     if (departuresTable) {
       const tableRows = departuresTable.querySelectorAll('tr')
       for (let i = 0; i < tableRows.length; i++) {
-        console.log(`RoutePageParser#departures  tableRow[${i}]`)
+        // console.log(`RoutePageParser#departures  tableRow[${i}]`)
         if (i < 2) {
-          console.log('RoutePageParser#departures  skip row')
+          // console.log('RoutePageParser#departures  skip row')
           continue
         }
         let tableRow = tableRows[i]
         if (!tableRow.classList.contains('toggle-div')) {
-          console.log(`RoutePageParser#departures  row should contain time and status`)
+          // console.log(`RoutePageParser#departures  row should contain time and status`)
           // describes a departure
           const [timeElement, statusElement, togglerElement] = Array.from(
             tableRow.querySelectorAll('td')
@@ -99,10 +100,10 @@ const RoutePageParser = (page: string) => {
           const statusString = cleanString(statusElement.textContent)
 
           if (togglerElement.classList.contains('toggle-arrow')) {
-            console.log('RoutePageParser#departures  row has further info')
+            // console.log('RoutePageParser#departures  row has further info')
             // a future departure
             const extraInfo = tableRows[i+1]
-            console.log('RoutePageParser#departures  further info should be here:', extraInfo)
+            // console.log('RoutePageParser#departures  further info should be here:', extraInfo)
             const ferryData = extraInfo.querySelector('.sailing-ferry-name')
             const deckSpaceData = extraInfo.querySelector('#deckSpace')
             let deckSpaceObject
@@ -112,10 +113,11 @@ const RoutePageParser = (page: string) => {
                 standardSpace,
                 mixedSpace
               ] = Array.from(deckSpaceData.querySelectorAll('.progress-bar'))
+              console.log('wtf is the deckspace [total, standard, mixed]:', totalSpace, standardSpace, mixedSpace )
               deckSpaceObject = {
-                total: parsePercent(cleanString(totalSpace?.textContent)),
-                standard: parsePercent(cleanString(standardSpace?.textContent)),
-                mixed: parsePercent(cleanString(mixedSpace?.textContent))
+                total: parsePercent(cleanString(totalSpace?.children[0].textContent)),
+                standard: parsePercent(cleanString(standardSpace?.children[0].textContent)),
+                mixed: parsePercent(cleanString(mixedSpace?.children[0].textContent))
               }
             } else {
               deckSpaceObject = {}
@@ -131,7 +133,7 @@ const RoutePageParser = (page: string) => {
             }
             departures.future.push(futureDeparture)
           } else {
-            console.log('RoutePageParser#departures no toggle arrow, its a past departure')
+            // console.log('RoutePageParser#departures no toggle arrow, its a past departure')
 
             // a past departure
             departures.past.push(

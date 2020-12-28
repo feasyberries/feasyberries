@@ -1,61 +1,20 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
-  import RouteSelector from './RouteSelector.svelte'
+  import PortList from './PortList.svelte'
   import RouteViewer from './RouteViewer.svelte'
-  import BackButton from './BackButton.svelte'
-  import Communicator from './communicator'
-  import routePageParser from './routePageParser'
-  import type {DestinationRoute, RouteParser, RoutesData } from './FeasyInterfaces'
-  let origin: RoutesData = <RoutesData>{}
-  let destination: DestinationRoute = <DestinationRoute>{}
-  let routesData: RoutesData[] = []
-  let selectedRouteParser: RouteParser = <RouteParser>{}
-  const objectIsEmpty = (obj: object): boolean => {
-    return Object.keys(obj).length === 0 && obj.constructor === Object
-  }
-  let routeIsSelected: boolean = false
-  const onBackButton = (_e) => {
-    if (routeIsSelected && selectedRouteParser) {
-      routeIsSelected = false
-      selectedRouteParser = <RouteParser>{}
-      destination = <DestinationRoute>{}
-    }
-    if (origin) {
-      origin = <RoutesData>{}
-    }
-  }
-  $: {
-    console.log('Either origin or destination changed...')
-    if (!objectIsEmpty(origin) && !objectIsEmpty(destination)) {
-      routeIsSelected = true
-    }
-  }
 
-  $: {
-    console.log('App#Reacting  to something')
-    if (routeIsSelected) {
-      console.log('App#Reacting  routeIsSelected, get and parse route info...')
-      Communicator.getRouteInfo(
-        `${origin['travelRouteName']}-${destination['travelRouteName']}/${origin['code']}-${destination['code']}`
-      ).then( response => {
-        console.log('App#Reacting  got the response, parse it')
-        selectedRouteParser = routePageParser(response)
-      })
+  let originCode: string
+  let destinationCode: string
+  const onBackButton = (_e: CustomEvent) => {
+    if (destinationCode) {
+      destinationCode = ''
+    } else {
+      originCode = ''
     }
   }
-  onMount(async () => {
-    console.log(`App#onMount`)
-    if (routesData.length === 0 ) {
-      Communicator.getAllRoutes().then( newRoutesData => {
-        console.log(`App#onMount  got routes, set them as routesData...`)
-        routesData = newRoutesData
-      })
-    }
-  })
 </script>
 
 <style>
-  :global(:root){
+  :global(:root) {
     --primary-color: #A5A1E0;
     --secondary-color-a: #E0CEAD;
     --secondary-color-b: #8B945C;
@@ -69,6 +28,11 @@
     --display-font: 'Permanent Marker', cursive;
     --sans-serif-font: 'Poppins', sans-serif;
     --serif-font: 'Crete Round', serif;
+    --lcd-font: 'lcd-clock', sans-serif;
+    --baseline: 0.375em;
+    --small-font-size: 0.75em; /*calc(--baseline * 2);      /* 0.75em */
+    --medium-font-size: 1.5em; /* calc(--baseline * 4);     1.5em  */
+    --header-font-size: 4.5em; /* calc(--baseline * 14) */  /* 5.25em */
   }
 
   header {
@@ -76,7 +40,7 @@
     color: var(--primary-color);
     font-family: var(--display-font);
     text-transform: uppercase;
-    font-size: 12vw;
+    font-size: var(--header-font-size);
     text-align: center;
     margin: 0;
   }
@@ -87,7 +51,8 @@
     height: 100vh;
     width: 100vw;
     display: grid;
-    grid-template-rows: 1fr 10fr
+    grid-template-rows: 1fr 10fr;
+    line-height: 1.4;
   }
 
   main {
@@ -111,14 +76,20 @@
   </header>
   <main>
     <section>
-      {#if routeIsSelected && selectedRouteParser }
-        <RouteViewer bind:selectedRouteParser on:backButton={onBackButton}/>
-      {:else}
-        <RouteSelector
-          bind:routesData
-          bind:origin
-          bind:destination
+      {#if originCode && destinationCode}
+        <RouteViewer {originCode} {destinationCode} on:backButton={onBackButton} />
+      {:else if originCode}
+        <PortList
+          filter={originCode}
+          title={'Destination?'}
+          backButton
+          on:portSelected={(e) => destinationCode = e.detail}
           on:backButton={onBackButton}
+        />
+      {:else}
+        <PortList
+          title={'Origin?'}
+          on:portSelected={(e) => originCode = e.detail}
         />
       {/if}
     </section>

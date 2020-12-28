@@ -29,15 +29,15 @@ const request = async (
 }
 
 const Communicator: CommunicatorObject = {
-  getAllRoutes: async () => {
-    console.log(`Communicator#getAllRoutes  Contacting berries...`)
+  getAllPorts: async () => {
+    console.log(`Communicator#getAllPorts  Contacting berries...`)
     let response = await request('GET', '/api/small', {})
     if (response.status === 200) {
-      console.log(`Communicator#getAllRoutes  Results valid, returning restults`)
+      console.log(`Communicator#getAllPorts  Results valid, returning restults`)
       const parsedJson = await response.json()
       return JSON.parse(parsedJson["page"])
     } else {
-      console.log(`Communicator#getAllRoutes  Something wrong, return empty array`)
+      console.log(`Communicator#getAllPorts  Something wrong, return empty array`)
       return []
     }
   },

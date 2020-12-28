@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { DestinationRoute, RoutesData } from './FeasyInterfaces';
+  import type { Port } from './utils/FeasyInterfaces';
   const dispatchEvent = createEventDispatcher()
-  const portSelected = (selectedPort) => {
-    dispatchEvent('portSelected', selectedPort)
+  const portSelected = (selectedPort: Port) => {
+    dispatchEvent('portSelected', selectedPort.code)
   }
-  export let port: RoutesData | DestinationRoute
+  export let port: Port
   const splitIndex = port.name.indexOf('(')
   const portTown = port.name.slice(0, splitIndex - 1)
   const portName = port.name.slice(splitIndex + 1, -1)
@@ -55,10 +55,10 @@
   }
   .portName {
     font-family: var(--serif-font);
-    font-size: 1.5em;
+    font-size: var(--medium-font-size);
   }
   .portTown {
-    font-size: 0.75em;
+    font-size: var(--small-font-size);
   }
 </style>
 

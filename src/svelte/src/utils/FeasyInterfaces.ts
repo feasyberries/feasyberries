@@ -1,5 +1,5 @@
 interface CommunicatorObject {
-  getAllRoutes: () => Promise<Array<RoutesData>>
+  getAllPorts: () => Promise<Array<OriginPort>>
   getRouteInfo: (uri: string) => Promise<string>
 }
 
@@ -18,32 +18,28 @@ interface SmallArea {
   isBookable: boolean
 }
 
-interface DestinationRoute {
-  destination: string
+interface Port {
   code: string
   name: string
   travelRouteName: string
+  city: SmallArea
   isBookable: boolean
+  geoGraphicalArea: SmallArea
+  allowsWalkOnOptions: boolean
+}
+
+interface DestinationPort extends Port{
+  destination: string
   isWalkOn: boolean
   motorcycleAllowed: boolean
   allowLivestock: boolean
-  allowsWalkOnOptions: boolean
   allowAdditionalPassengerTypes: boolean
   routeType: string
   limitedAvailability: boolean
-  geoGraphicalArea: SmallArea
-  city: SmallArea
 }
 
-interface RoutesData {
-  code: string
-  name: string
-  travelRouteName: string
-  city: SmallArea
-  geoGraphicalArea: SmallArea
-  destinationRoutes: Array<DestinationRoute>
-  isBookable: boolean
-  allowsWalkOnOptions: boolean
+interface OriginPort extends Port {
+  destinationRoutes: Array<DestinationPort>
 }
 
 interface PastStatus {
@@ -86,8 +82,9 @@ interface DeparturesList {
 export type {
   CommunicatorObject,
   SmallArea,
-  DestinationRoute,
-  RoutesData,
+  Port,
+  DestinationPort,
+  OriginPort,
   PastStatus,
   FutureStatus,
   DeparturesList,

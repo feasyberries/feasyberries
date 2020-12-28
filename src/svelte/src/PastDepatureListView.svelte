@@ -1,5 +1,7 @@
 <script lang="ts">
-  import type { PastDeparture } from './FeasyInterfaces'
+  import Clock from './Clock.svelte'
+import ProgressBar from './ProgressBar.svelte'
+import type { PastDeparture } from './utils/FeasyInterfaces'
   export let departure: PastDeparture
   // departure = {time: number, status: {time: number, status: string}}
   const { time: departureTime, status: statusObj } = departure
@@ -31,18 +33,33 @@
   li {
     display: flex;
     flex-direction: row;
+    color: var(--primary-color);
+    background-color: var(--light-primary);
+    border-radius: 0.5em;
+    height: 4em;
+    margin: 0.5em;
+    align-items: center;
     justify-content: space-between;
     height: 4em;
+    width: 28em;
+  }
+  .departure, .arrival {
+    display: flex;
+    flex-direction: column;
+    place-items: center;
+    font-family: var(--serif-font);
   }
 </style>
 
 <li>
-    <span class="start">{formatTime(departureTime)}</span>
-    {#if arrived}
-      <span class="percentComplete">100</span>
-    {:else}
-      <span class="percentComplete">{Math.round(percentComplete)}%</span>
-    {/if}
-    <span class="end">{formatTime(arrivalTime)}</span>
+    <div class='departure'>
+      Departed
+      <Clock time={departureTime} />
+    </div>
+    <ProgressBar value={Math.round(percentComplete)} />
+    <div class='arrival'>
+      {arrived ? 'Arrived' : 'ETA'}
+      <Clock time={arrivalTime} />
+    </div>
 </li>
 

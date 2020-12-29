@@ -11,6 +11,7 @@ services:
     working_dir: '/feasyberries'
     environment:
       - REDIS_URL=redis
+      - PORT=8080
     depends_on:
       - redis
   svelte_builder:

@@ -845,7 +845,7 @@ var app = (function () {
     const Communicator = {
         getAllPorts: async () => {
             console.log(`Communicator#getAllPorts  Contacting berries...`);
-            let response = await request('GET', '/api/small', {});
+            let response = await request('GET', '/api/cc-route-info', {});
             if (response.status === 200) {
                 console.log(`Communicator#getAllPorts  Results valid, returning restults`);
                 const parsedJson = await response.json();

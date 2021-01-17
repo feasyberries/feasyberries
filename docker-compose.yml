@@ -2,7 +2,7 @@ version: '3'
 services:
   web:
     build: .
-    command: 'nginx -p /feasyberries/ -c nginx.conf'
+    command: 'ruby feasy.rb'
     volumes:
       - '.:/feasyberries'
       - node_modules:/feasyberries/node_modules
@@ -10,8 +10,8 @@ services:
       - '8080:8080'
     working_dir: '/feasyberries'
     environment:
-      - REDIS_URL=redis
-      - PORT=8080
+      - REDIS_URL=redis://redis:6379/0
+      - APP_PORT=8080
     depends_on:
       - redis
   svelte_builder:

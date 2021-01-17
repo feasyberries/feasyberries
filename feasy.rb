@@ -3,10 +3,8 @@ require 'redis'
 require 'http'
 require 'json'
 
-set :port, ENV['APP_PORT']
 set :bind, '0.0.0.0'
 set :public_folder, __dir__ + '/src/svelte/public'
-
 
 def net_request(path)
   root_url = 'https://www.bcferries.com/'

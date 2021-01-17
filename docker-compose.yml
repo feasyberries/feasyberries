@@ -2,7 +2,7 @@ version: '3'
 services:
   web:
     build: .
-    command: 'ruby feasy.rb'
+    command: 'bundle exec puma -p 8080'
     volumes:
       - '.:/feasyberries'
       - node_modules:/feasyberries/node_modules
@@ -11,7 +11,6 @@ services:
     working_dir: '/feasyberries'
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - APP_PORT=8080
     depends_on:
       - redis
   svelte_builder:

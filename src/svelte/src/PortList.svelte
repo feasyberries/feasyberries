@@ -26,27 +26,24 @@
 
 <style>
   .portList {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
   }
 
   header {
     font-size: var(--header-font-size);
+    line-height: var(--header-line-height);
     text-align: center;
-    font-family: var(--display-font);
+    font-family: var(--header-font);
   }
 
   ul {
     display: grid;
     align-content: end;
-    height: 100%;
     list-style-type: none;
     padding: 0;
     margin: 0;
     background-image: url("/map.png");
-    background-size: auto 100%;
+    background-attachment: fixed;
+    background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
   }
@@ -54,9 +51,6 @@
 
 <section class="portList">
   <header>{title}</header>
-  {#if backButton}
-    <BackButton on:backButton />
-  {/if}
   <ul>
     {#each sortedPorts as port}
       <PortListItem {port} on:portSelected/>

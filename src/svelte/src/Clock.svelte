@@ -18,17 +18,16 @@
 
 <style>
   .clock {
-    padding-right: 1em;
-    margin-right: 1em;
-    margin-left: 1em;
     border-radius: 0.25em;
     width: 5em;
     font-family: var(--lcd-font);
+    line-height: 1.45em;
     color: var(--secondary-color-a);
     background-color: var(--light-grey);
-    text-align: right;
+    text-align: center;
     display: inline-block;
     user-select: none;
+    white-space: nowrap;
   }
   .blink {
     animation: blinker 1s step-start infinite;

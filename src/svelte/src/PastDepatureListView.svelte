@@ -35,30 +35,41 @@ import type { PastDeparture } from './utils/FeasyInterfaces'
     flex-direction: row;
     color: var(--primary-color);
     background-color: var(--light-primary);
-    border-radius: 0.5em;
-    height: 4em;
-    margin: 0.5em;
-    align-items: center;
+    border-radius: var(--baseline);
+    height: calc(var(--baseline) * 8);
+    margin: var(--baseline);
     justify-content: space-between;
-    height: 4em;
-    width: 28em;
   }
   .departure, .arrival {
-    display: flex;
-    flex-direction: column;
-    place-items: center;
+    padding: 0.5em;
     font-family: var(--serif-font);
+    font-size: var(--small-font-size);
+    line-height: var(--small-line-height);
+    height: inherit;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  p {
+    margin: 0 0 0.2em 0;
+  }
+  .progress {
+    margin-top: calc(var(--baseline) * 2);
+    flex: 0 1 33%;
+    height: 1.5em;
+    line-height: 2.1em;
   }
 </style>
 
 <li>
     <div class='departure'>
-      Departed
+      <p>Departed</p>
       <Clock time={departureTime} />
     </div>
-    <ProgressBar value={Math.round(percentComplete)} />
+    <div class='progress'>
+      <ProgressBar value={Math.round(percentComplete)} />
+    </div>
     <div class='arrival'>
-      {arrived ? 'Arrived' : 'ETA'}
+      <p>{arrived ? 'Arrived' : 'ETA'}</p>
       <Clock time={arrivalTime} />
     </div>
 </li>

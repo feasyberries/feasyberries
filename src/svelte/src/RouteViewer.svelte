@@ -17,10 +17,8 @@ import Clock from './Clock.svelte'
 
 <style>
   .routeViewer {
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
   }
 
   ul {
@@ -32,25 +30,31 @@ import Clock from './Clock.svelte'
   header {
     font-size: var(--header-font-size);
     text-align: center;
-    font-family: var(--display-font);
+    font-family: var(--header-font);
+    line-height: var(--header-line-height);
   }
 
   .routes {
-    height: 100%;
+    background-attachment: fixed;
+    background-size: cover;
     background-image: url("/map.png");
-    background-size: auto 100%;
     background-position: center center;
     background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
-    align-items: center;
     user-select: none;
+  }
+  .currentTime {
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 0.08em;
+    margin-bottom: 0;
+    font-size: 0.9em;
   }
 </style>
 
 <section class="routeViewer">
   <header>When?</header>
-  <BackButton on:backButton />
   <section class="routes">
     {#await routeStatusPromise}
       <p>Awaiting Route data...</p>
@@ -60,7 +64,9 @@ import Clock from './Clock.svelte'
             <PastDepatureListView departure={pastDeparture} />
           {/each}
         </ul>
+        <div class="currentTime">
           <Clock time={now}/>
+        </div>
         <ul class="futureDepartures">
           {#each routeStatus.future as futureDeparture}
             <FutureDepartureListView departure={futureDeparture} />

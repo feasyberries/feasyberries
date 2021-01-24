@@ -36,57 +36,69 @@ import ProgressBar from './ProgressBar.svelte'
 
 <style>
   li {
-    display: grid;
-    grid-template-columns: 1fr 3fr;
+    display: flex;
     color: var(--primary-color);
     background-color: var(--light-primary);
-    border-radius: 0.5em;
-    align-items: center;
-    margin: 0.5em;
-    height: 4em;
-    width: 28em;
+    border-radius: var(--baseline);
+    margin: var(--baseline);
+    height: calc(var(--baseline) * 8);
+    justify-content: space-between;
   }
   .departure {
-    display: flex;
-    flex-direction: column;
-    place-items: center;
+    padding: 0.5em;
     font-family: var(--serif-font);
+    font-size: var(--small-font-size);
+    line-height: var(--small-line-height);
+    height: inherit;
+    text-align: center;
+    box-sizing: border-box;
   }
   .deckspace {
+    height: inherit;
     display: grid;
     font-family: var(--serif-font);
-    font-size: 1em;
+    font-size: var(--small-font-size);
+    line-height: var(--small-line-height);
     align-items: center;
-    justify-items: stretch;
+    box-sizing: border-box;
+    padding-right: 0.5em;
+    padding-top: 0.2em;
+    width: 70%;
   }
   .deckspace > span {
     display: grid;
     grid-template-columns: 1fr 3fr;
     text-align: end;
-    margin: 0.25em;
+    margin-left: 0.25em;
+  }
+  p {
+    margin: 0 0 0.2em 0;
+  }
+  .progress {
+    height: 100%;
+    width: 100%;
   }
 </style>
 
 <li>
   <div class='departure'>
-    Departs
+    <p>Departs</p>
     <Clock time={departure.time} />
   </div>
   <div class='deckspace'>
-      <span>Total: <ProgressBar value={100 - departure.status.percentAvailable} /></span>
+      <span>
+        Total:
+        <span class='progress'>
+          <ProgressBar value={100 - departure.status.percentAvailable} />
+        </span>
+      </span>
     {#if departure.deckSpace.mixed}
-      <span>Mixed: <ProgressBar value={100 - departure.deckSpace.mixed} /></span>
+      <span>
+        Mixed:
+        <span class='progress'>
+          <ProgressBar value={100 - departure.deckSpace.mixed} />
+        </span>
+      </span>
     {/if}
   </div>
-
-  <!-- <span class="ferry" data-url={departure.ferry.url}>
-    {departure.ferry.name}
-  </span> -->
-  <!-- <span
-    class="deckSpace"
-    data-standard-available={departure.deckSpace?.standard}
-    data-mixed-available={departure.deckSpace?.mixed}
-  >
-    {departure.deckSpace.total || departure.status.percentAvailable}%
-  </span> -->
 </li>

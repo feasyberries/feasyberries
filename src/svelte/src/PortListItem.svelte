@@ -25,40 +25,46 @@
     color: var(--primary-color);
     background-color: var(--light-primary);
     border-radius: 10px;
-    height: 4em;
-    margin: 0.5em;
+    height: calc(var(--baseline) * 10);
+    margin: var(--baseline);
     align-items: center;
   }
   li.reversed {
     flex-direction: row-reverse;
   }
   .portCodeIcon {
-    height: 2.5em;
-    width: 2.5em;
+    height: calc(var(--baseline) * 6);
+    width: calc(var(--baseline) * 6);
     place-items: center;
     display: grid;
     background-color: var(--background-color-light);
     border-radius: 50%;
-    border: 0.3em solid var(--primary-color);
-    padding: 0.5em;
+    border: var(--baseline) solid var(--primary-color);
+    padding: var(--baseline);
   }
   .portCode {
     color: var(--dark-grey);
     font-weight: 600;
-    transform: scaleY(2.5);
+    transform: scaleY(2);
   }
   .portDetails {
-    margin-left: 1em;
-    margin-right: 1em;
-    display: flex;
-    flex-direction: column;
+    margin-left: calc(var(--baseline) * 4);
+    margin-right: calc(var(--baseline) * 4);
+    height: inherit;
   }
   .portName {
+    margin-top: 0.55em;
+    margin-bottom: 0;
     font-family: var(--serif-font);
     font-size: var(--medium-font-size);
+    line-height: 1.3em;
+    font-weight: 300;
   }
   .portTown {
+    font-weight: 300;
+    margin: 0;
     font-size: var(--small-font-size);
+    line-height: var(--small-line-height);
   }
 </style>
 
@@ -70,7 +76,7 @@
     <span class='portCode'>{port.code}</span>
   </div>
   <div class='portDetails'>
-    <span class='portName'>{portName}</span>
-    <span class='portTown'>{portTown}</span>
+    <p class='portName'>{portName}</p>
+    <p class='portTown'>{portTown}</p>
   </div>
 </li>

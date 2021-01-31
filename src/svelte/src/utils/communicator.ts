@@ -5,23 +5,23 @@ const request = async (
   url: string,
   params: object
 ): Promise<Response> => {
-  console.log(`Communicator#request`)
+  // console.log(`Communicator#request`)
   const fetch_options: object = {
     method: method,
     ...params
   }
-  console.log(`Communicator#request  request: ${method}: ${url}`, fetch_options)
+  // console.log(`Communicator#request  request: ${method}: ${url}`, fetch_options)
   // return fetch(url, fetch_options)
   let response = await fetch(url, fetch_options)
   let networkAttempts = 0
   while (networkAttempts < 5) {
-    console.log(`Communicator#request  Requesting...`)
+    // console.log(`Communicator#request  Requesting...`)
     if (response.status !== 200) {
       networkAttempts = networkAttempts + 1
-      console.log(`Communicator#request  Error detected, retry #${networkAttempts}`)
+      // console.log(`Communicator#request  Error detected, retry #${networkAttempts}`)
       response = await request(method, url, params)
     } else {
-      console.log(`Communicator#request  Reponse valid`)
+      // console.log(`Communicator#request  Reponse valid`)
       break
     }
   }
@@ -30,26 +30,26 @@ const request = async (
 
 const Communicator: CommunicatorObject = {
   getAllPorts: async () => {
-    console.log(`Communicator#getAllPorts  Contacting berries...`)
+    // console.log(`Communicator#getAllPorts  Contacting berries...`)
     let response = await request('GET', '/api/cc-route-info', {})
     if (response.status === 200) {
-      console.log(`Communicator#getAllPorts  Results valid, returning restults`)
+      // console.log(`Communicator#getAllPorts  Results valid, returning restults`)
       const parsedJson = await response.json()
       return JSON.parse(parsedJson["page"])
     } else {
-      console.log(`Communicator#getAllPorts  Something wrong, return empty array`)
+      // console.log(`Communicator#getAllPorts  Something wrong, return empty array`)
       return []
     }
   },
   getRouteInfo: async (uri) => {
-    console.log(`Communicator#getRouteInfo  fetching route: ${uri}`)
+    // console.log(`Communicator#getRouteInfo  fetching route: ${uri}`)
     let response = await request('GET', `/api/current-conditions/${uri}`, {})
     if (response.status === 200) {
-      console.log(`Communicator#getRouteInfo  Results valid, returning restults`)
+      // console.log(`Communicator#getRouteInfo  Results valid, returning restults`)
       const parsedJson = await response.json()
       return parsedJson["page"]
     } else {
-      console.log(`Communicator#getRouteInfo  Something wrong, return empty array`)
+      // console.log(`Communicator#getRouteInfo  Something wrong, return empty array`)
       return ''
     }
   }

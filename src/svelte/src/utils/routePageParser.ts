@@ -52,7 +52,7 @@ const RoutePageParser = (page: string) => {
 
   const parsePastStatus = (statusString: string): PastStatus => {
     const [status, timeStr, meridiem] = statusString.split(' ')
-    console.log(`arsing past status time, parseTime(${timeStr} ${meridiem})`)
+    // console.log(`arsing past status time, parseTime(${timeStr} ${meridiem})`)
     const time = parseTime(`${timeStr} ${meridiem}`)
     return {
       status: status.slice(0, -1), // removes colon
@@ -113,7 +113,7 @@ const RoutePageParser = (page: string) => {
                 standardSpace,
                 mixedSpace
               ] = Array.from(deckSpaceData.querySelectorAll('.progress-bar'))
-              console.log('wtf is the deckspace [total, standard, mixed]:', totalSpace, standardSpace, mixedSpace )
+              // console.log('wtf is the deckspace [total, standard, mixed]:', totalSpace, standardSpace, mixedSpace )
               deckSpaceObject = {
                 total: parsePercent(cleanString(totalSpace?.children[0].textContent)),
                 standard: parsePercent(cleanString(standardSpace?.children[0].textContent)),

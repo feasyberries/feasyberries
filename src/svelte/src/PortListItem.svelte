@@ -6,6 +6,8 @@
     dispatchEvent('portSelected', selectedPort.code)
   }
   export let port: Port
+  export let index: number
+
   const splitIndex = port.name.indexOf('(')
   const portTown = port.name.slice(0, splitIndex - 1)
   const portName = port.name.slice(splitIndex + 1, -1)
@@ -66,11 +68,15 @@
     font-size: var(--small-font-size);
     line-height: var(--small-line-height);
   }
+  .first {
+    margin-top: auto;
+  }
 </style>
 
 <li
   on:click={ _ => portSelected(port) }
-  class:reversed="{iconRight[port.code]}"
+  class:reversed={iconRight[port.code]}
+  class:first={index === 0}
 >
   <div class='portCodeIcon'>
     <span class='portCode'>{port.code}</span>

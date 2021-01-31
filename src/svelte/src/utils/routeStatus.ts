@@ -5,11 +5,11 @@ import type { OriginPort, DestinationPort } from './FeasyInterfaces'
 
 const routeStatus = async (originCode: string, destinationCode: string) => {
   let origin: OriginPort = <OriginPort>{}
-  console.log('routeStauts attempt to read from store...')
+  // console.log('routeStauts attempt to read from store...')
   ports.subscribe((value: Map<string, OriginPort>) => {
-    console.log(`reading store value, looking for ${originCode}`, value)
+    // console.log(`reading store value, looking for ${originCode}`, value)
     const wtf = value.get(originCode)
-    console.log('wtf is wtf', wtf)
+    // console.log('wtf is wtf', wtf)
     origin = value.get(originCode) || <OriginPort>{}
     // - sort out the possibly undefined problem here
     // - get to finishing this stores rewrite
@@ -18,7 +18,7 @@ const routeStatus = async (originCode: string, destinationCode: string) => {
     // - swing back around on the concept of baseline
     //   designing
   })
-  console.log('origin should now be set:', origin)
+  // console.log('origin should now be set:', origin)
 
   const destination = origin.destinationRoutes.find( destination =>
     destination.code == destinationCode

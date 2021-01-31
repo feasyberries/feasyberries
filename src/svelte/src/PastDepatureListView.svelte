@@ -15,7 +15,6 @@ import type { PastDeparture } from './utils/FeasyInterfaces'
   const percentComplete =
     (now - departureTime) / (arrivalTime - departureTime) * 100
 
-  console.log(`departureTime:${departureTime}, now:${now}, arrivalTime:${arrivalTime}, percentComplete:${percentComplete}`)
   const formatTime = (time: number): string => {
     const date = new Date(time)
     return date.toLocaleTimeString(

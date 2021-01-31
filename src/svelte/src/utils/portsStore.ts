@@ -13,9 +13,7 @@ const createPortsStore = () => {
 }
 
 const fetchData = async (set:(data:any) => void): Promise<void> => {
-  console.log(`portsStore#fetchData:  fetching ports...`)
   Communicator.getAllPorts().then( newPortsData => {
-    console.log(`portsStore#fetchData:  got ports`)
     const finalData = newPortsData.reduce((memo, route) => {
       memo.set(route.code, route)
       return memo

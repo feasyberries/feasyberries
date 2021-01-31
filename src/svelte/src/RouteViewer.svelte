@@ -1,9 +1,9 @@
 <script lang="ts">
-  import BackButton from './BackButton.svelte'
   import PastDepatureListView from './PastDepatureListView.svelte'
   import FutureDepartureListView from './FutureDepatureListView.svelte'
   import routeStaus from './utils/routeStatus'
-import Clock from './Clock.svelte'
+  import scrollShadow from './utils/scrollShadow'
+  import Clock from './Clock.svelte'
 
   export let originCode: string
   export let destinationCode: string
@@ -16,33 +16,20 @@ import Clock from './Clock.svelte'
 </script>
 
 <style>
-  .routeViewer {
-    display: flex;
-    flex-direction: column;
-  }
-
   ul {
     list-style: none;
     padding: 0;
     margin: 0;
   }
 
-  header {
-    font-size: var(--header-font-size);
-    text-align: center;
-    font-family: var(--header-font);
-    line-height: var(--header-line-height);
-  }
-
   .routes {
-    background-attachment: fixed;
-    background-size: cover;
-    background-image: url("/map.png");
-    background-position: center center;
-    background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
     user-select: none;
+    overflow-y: scroll;
+    flex-basis: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
   }
   .currentTime {
     margin-right: auto;
@@ -53,27 +40,28 @@ import Clock from './Clock.svelte'
   }
 </style>
 
-<section class="routeViewer">
-  <header>When?</header>
+{#await routeStatusPromise}
   <section class="routes">
-    {#await routeStatusPromise}
-      <p>Awaiting Route data...</p>
-    {:then routeStatus}
-        <ul class="pastDepartures">
-          {#each routeStatus.past as pastDeparture}
-            <PastDepatureListView departure={pastDeparture} />
-          {/each}
-        </ul>
-        <div class="currentTime">
-          <Clock time={now}/>
-        </div>
-        <ul class="futureDepartures">
-          {#each routeStatus.future as futureDeparture}
-            <FutureDepartureListView departure={futureDeparture} />
-          {/each}
-        </ul>
-    {:catch error}
-      <p>Something went wrong: {error.message}</p>
-    {/await}
+    <p>Awaiting Route data...</p>
   </section>
-</section>
+{:then routeStatus}
+  <section class="routes" use:scrollShadow>
+    <ul class="pastDepartures">
+      {#each routeStatus.past as pastDeparture}
+        <PastDepatureListView departure={pastDeparture} />
+      {/each}
+    </ul>
+    <div class="currentTime">
+      <Clock time={now}/>
+    </div>
+    <ul class="futureDepartures">
+      {#each routeStatus.future as futureDeparture}
+        <FutureDepartureListView departure={futureDeparture} />
+      {/each}
+    </ul>
+  </section>
+{:catch error}
+  <section class="routes">
+    <p>Something went wrong: {error.message}</p>
+  </section>
+{/await}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackButton from './BackButton.svelte'
   import PortList from './PortList.svelte'
   import RouteViewer from './RouteViewer.svelte'
 
@@ -52,14 +53,66 @@
     background-color: var(--background-color-dark);
     font-family: var(--sans-serif-font);
     font-weight: 300;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  h1 {
+    font-size: var(--header-font-size);
+    line-height: var(--header-line-height);
+    text-align: center;
+    font-family: var(--header-font);
+    margin: 0;
+    background-color: var(--background-color-light);
   }
 
   main {
-    width: 80%;
+    width: 90%;
     margin: 0 auto;
     border-radius: 0.15em;
     color: var(--dark-grey);
     background-color: var(--background-color-light);
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100%;
+    background-attachment: fixed;
+    background-size: cover;
+    background-image: url("/map.png");
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+
+  :global(.scroll-shadow:before) {
+    content:'';
+    display:block;
+    position:absolute;
+    width: 90%;
+    height: 2em;
+    transition: opacity 100ms linear;
+    box-shadow: 0 1em 1.5em -1.5em black inset;
+    opacity: 0;
+  }
+
+  :global(.scroll-shadow:after) {
+    content:'';
+    display:block;
+    position:absolute;
+    width: 90%;
+    height: 2em;
+    bottom: 0;
+    /* transform: scaleY(-1); */
+    transition: opacity 100ms linear;
+    box-shadow: 0 -1em 1em -1em black inset;
+    opacity: 0;
+  }
+
+  :global(.scroll-shadow-top:before) {
+    opacity: 1;
+  }
+  :global(.scroll-shadow-bottom:after) {
+    opacity: 1;
   }
 </style>
 
@@ -68,23 +121,21 @@
     Feasy Berries
   </header>
   <main>
-    <section>
-      {#if originCode && destinationCode}
-        <RouteViewer {originCode} {destinationCode} on:backButton={onBackButton} />
-      {:else if originCode}
-        <PortList
-          filter={originCode}
-          title={'Destination?'}
-          backButton
-          on:portSelected={(e) => destinationCode = e.detail}
-          on:backButton={onBackButton}
-        />
-      {:else}
-        <PortList
-          title={'Origin?'}
-          on:portSelected={(e) => originCode = e.detail}
-        />
-      {/if}
-    </section>
+    {#if originCode && destinationCode}
+      <h1>When?</h1>
+      <RouteViewer {originCode} {destinationCode} />
+    {:else if originCode}
+      <h1>Destination?</h1>
+      <PortList
+        filter={originCode}
+        on:portSelected={(e) => destinationCode = e.detail}
+      />
+    {:else}
+      <h1>Origin?</h1>
+      <PortList on:portSelected={(e) => originCode = e.detail} />
+    {/if}
+    {#if originCode || destinationCode}
+      <BackButton on:backButton={onBackButton}/>
+    {/if}
   </main>
 </div>

@@ -3,7 +3,6 @@
 import ProgressBar from './ProgressBar.svelte'
   import type { FutureDeparture } from './utils/FeasyInterfaces'
   export let departure: FutureDeparture
-  console.log(`FutureDeparture`, departure)
   // departure = {
   //   time: number,
   //   status: {

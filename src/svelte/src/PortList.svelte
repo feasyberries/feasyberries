@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { fly } from 'svelte/transition';
   import PortListItem from './PortListItem.svelte'
   import { ports } from './utils/portsStore'
   import scrollShadow from './utils/scrollShadow'
+
   import type { Port } from './utils/FeasyInterfaces'
 
   export let filter: string = ''
@@ -37,9 +39,13 @@
 </style>
 
 {#if $ports.size}
-  <ul use:scrollShadow>
-    {#each sortedPorts as port, index}
-      <PortListItem {port} {index} on:portSelected/>
+  <ul use:scrollShadow transition:fly={{y: 500}}>
+    {#each sortedPorts as port, index (port)}
+      <PortListItem
+        {port}
+        {index}
+        on:portSelected
+      />
     {/each}
   </ul>
 {:else}

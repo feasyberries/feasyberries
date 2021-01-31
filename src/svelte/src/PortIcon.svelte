@@ -1,17 +1,9 @@
-<script lang="ts">
-  import { fly } from 'svelte/transition';
-  import { createEventDispatcher } from 'svelte';
-  const dispatchEvent = createEventDispatcher()
-  const backButton = (_: Event) => {
-    dispatchEvent('backButton')
-  }
+<script lang='ts'>
+  export let text: string
 </script>
 
 <style>
-  div {
-    position: absolute;
-    left:calc(var(--baseline) * -3);
-    bottom: calc(var(--baseline) * 6.5);
+  .portCodeIcon {
     height: calc(var(--baseline) * 6);
     width: calc(var(--baseline) * 6);
     place-items: center;
@@ -22,13 +14,13 @@
     padding: var(--baseline);
     user-select: none;
   }
-  span {
+  .portCode {
     color: var(--dark-grey);
     font-weight: 600;
     transform: scaleY(2);
   }
 </style>
 
-<div transition:fly={{x: -100}} on:click={backButton}>
-  <span>{`<`}</span>
+<div class='portCodeIcon'>
+  <span class='portCode'>{text}</span>
 </div>

@@ -4,6 +4,8 @@
   import routeStaus from './utils/routeStatus'
   import scrollShadow from './utils/scrollShadow'
   import Clock from './Clock.svelte'
+  import { fly } from 'svelte/transition'
+  import CircleSpinner from './CircleSpinner.svelte'
 
   export let originCode: string
   export let destinationCode: string
@@ -32,36 +34,39 @@
     flex-shrink: 1;
   }
   .currentTime {
-    margin-right: auto;
-    margin-left: auto;
+    text-align: center;
     margin-top: 0.08em;
     margin-bottom: 0;
     font-size: 0.9em;
   }
+  .spinnerContainer {
+    position: absolute;
+    top: 40%;
+    left: calc(50% - 30px)
+  }
 </style>
-
-{#await routeStatusPromise}
-  <section class="routes">
-    <p>Awaiting Route data...</p>
-  </section>
-{:then routeStatus}
-  <section class="routes" use:scrollShadow>
-    <ul class="pastDepartures">
-      {#each routeStatus.past as pastDeparture}
-        <PastDepatureListView departure={pastDeparture} />
-      {/each}
-    </ul>
-    <div class="currentTime">
-      <Clock time={now}/>
+<section class="routes" use:scrollShadow>
+  {#await routeStatusPromise}
+    <div class='spinnerContainer'>
+      <CircleSpinner size={60}/>
     </div>
-    <ul class="futureDepartures">
-      {#each routeStatus.future as futureDeparture}
-        <FutureDepartureListView departure={futureDeparture} />
-      {/each}
-    </ul>
-  </section>
-{:catch error}
-  <section class="routes">
+  {:then routeStatus}
+    <div transition:fly={{y: 500}}>
+      <ul class="pastDepartures">
+        {#each routeStatus.past as pastDeparture}
+          <PastDepatureListView departure={pastDeparture} />
+        {/each}
+      </ul>
+      <div class="currentTime">
+        <Clock time={now}/>
+      </div>
+      <ul class="futureDepartures">
+        {#each routeStatus.future as futureDeparture}
+          <FutureDepartureListView departure={futureDeparture} />
+        {/each}
+      </ul>
+    </div>
+  {:catch error}
     <p>Something went wrong: {error.message}</p>
-  </section>
-{/await}
+  {/await}
+</section>

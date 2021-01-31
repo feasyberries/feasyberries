@@ -51,8 +51,15 @@ const RoutePageParser = (page: string) => {
   }
 
   const parsePastStatus = (statusString: string): PastStatus => {
-    const [status, timeStr, meridiem] = statusString.split(' ')
+    const statusArray = statusString.split(' ')
     // console.log(`arsing past status time, parseTime(${timeStr} ${meridiem})`)
+    let status: string, timeStr: string, meridiem: string
+    if (statusArray.length === 3) {
+      [status, timeStr, meridiem] = statusArray
+    } else {
+      [timeStr, meridiem] = statusArray
+      status = 'ETA'
+    }
     const time = parseTime(`${timeStr} ${meridiem}`)
     return {
       status: status.slice(0, -1), // removes colon

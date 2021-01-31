@@ -40,14 +40,14 @@ import ProgressBar from './ProgressBar.svelte'
     background-color: var(--light-primary);
     border-radius: var(--baseline);
     margin: var(--baseline);
-    height: calc(var(--baseline) * 8);
+    height: calc(var(--baseline) * 10);
     justify-content: space-between;
   }
   .departure {
     padding: 0.5em;
     font-family: var(--serif-font);
-    font-size: var(--small-font-size);
-    line-height: var(--small-line-height);
+    font-size: var(--smedium-font-size);
+    line-height: var(--smedium-line-height);
     height: inherit;
     text-align: center;
     box-sizing: border-box;

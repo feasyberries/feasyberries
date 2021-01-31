@@ -1,6 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { Port } from './utils/FeasyInterfaces';
+  import PortIcon from './PortIcon.svelte'
+
+  import type { Port } from './utils/FeasyInterfaces'
+
   const dispatchEvent = createEventDispatcher()
   const portSelected = (selectedPort: Port) => {
     dispatchEvent('portSelected', selectedPort.code)
@@ -19,6 +22,9 @@
     'TSA': true,
     'SWB': false
   }
+  const clickHandler = (_: Event): void => {
+    portSelected(port)
+  }
 </script>
 
 <style>
@@ -34,21 +40,7 @@
   li.reversed {
     flex-direction: row-reverse;
   }
-  .portCodeIcon {
-    height: calc(var(--baseline) * 6);
-    width: calc(var(--baseline) * 6);
-    place-items: center;
-    display: grid;
-    background-color: var(--background-color-light);
-    border-radius: 50%;
-    border: var(--baseline) solid var(--primary-color);
-    padding: var(--baseline);
-  }
-  .portCode {
-    color: var(--dark-grey);
-    font-weight: 600;
-    transform: scaleY(2);
-  }
+
   .portDetails {
     margin-left: calc(var(--baseline) * 4);
     margin-right: calc(var(--baseline) * 4);
@@ -74,13 +66,11 @@
 </style>
 
 <li
-  on:click={ _ => portSelected(port) }
+  on:click={clickHandler}
   class:reversed={iconRight[port.code]}
   class:first={index === 0}
 >
-  <div class='portCodeIcon'>
-    <span class='portCode'>{port.code}</span>
-  </div>
+  <PortIcon text={port.code}/>
   <div class='portDetails'>
     <p class='portName'>{portName}</p>
     <p class='portTown'>{portTown}</p>

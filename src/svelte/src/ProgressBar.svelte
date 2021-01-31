@@ -15,7 +15,7 @@
 }
 
 .progress .value:before {
-  color: var(--dark-grey);
+  color: var(--secondary-color-a);
   content: attr(data-label);
   font-size: var(--small-font-size);
   position: absolute;

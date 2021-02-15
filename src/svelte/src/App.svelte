@@ -130,7 +130,8 @@
   }
 
   .titleContainer {
-    height: 5em;
+    height: calc(var(--baseline) * 10);
+    flex-shrink: 0;
     color: var(--primary-color);
     display:flex;
     justify-content: space-between;

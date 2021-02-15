@@ -16,6 +16,7 @@
   .clock {
     border-radius: 0.25em;
     font-family: var(--sans-serif-font);
+    font-weight: 600;
     color: var(--highlight-color);
     background-color: var(--primary-color);
     text-align: center;

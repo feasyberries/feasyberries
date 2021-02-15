@@ -1,36 +1,8 @@
 <script lang="ts">
   import Clock from './Clock.svelte'
-import ProgressBar from './ProgressBar.svelte'
+  import ProgressBar from './ProgressBar.svelte'
   import type { FutureDeparture } from './utils/FeasyInterfaces'
   export let departure: FutureDeparture
-  // departure = {
-  //   time: number,
-  //   status: {
-  //     percentAvailable: number
-  //   },
-  //   ferry: {
-  //     name: string,
-  //     url: string
-  //   },
-  //   deckSpace: {
-  //     total: number,
-  //     standard: number,
-  //     mixed: number
-  //   }
-  // }
-
-  const formatTime = (time: number): string => {
-    const date = new Date(time)
-    return date.toLocaleTimeString(
-      'en',
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }
-    )
-  }
-
 </script>
 
 <style>
@@ -81,7 +53,7 @@ import ProgressBar from './ProgressBar.svelte'
         Total:
         <span class='progress'>
           <ProgressBar
-            value={100 - departure.status.percentAvailable}
+            value={100 - departure.deckSpace.total}
             fullText="Full"
           />
         </span>

@@ -8,14 +8,15 @@
     width: calc(var(--baseline) * 6);
     place-items: center;
     display: grid;
-    background-color: var(--background-color-light);
+    background-color: var(--background-color);
     border-radius: 50%;
-    border: var(--baseline) solid var(--primary-color);
+    border: var(--baseline) solid var(--highlight-color);
     padding: var(--baseline);
     user-select: none;
+    -webkit-user-select: none;
   }
   .portCode {
-    color: var(--dark-grey);
+    color: var(--primary-color);
     font-weight: 600;
     transform: scaleY(2);
   }

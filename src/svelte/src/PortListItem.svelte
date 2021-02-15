@@ -10,6 +10,9 @@
   }
   export let port: Port
   export let index: number
+  export let iconSender: Function
+
+  let showIcon = true
 
   const splitIndex = port.name.indexOf('(')
   const portTown = port.name.slice(0, splitIndex - 1)
@@ -23,6 +26,7 @@
     'SWB': false
   }
   const clickHandler = (_: Event): void => {
+    showIcon = false
     portSelected(port)
   }
 </script>
@@ -31,19 +35,21 @@
   li {
     display:flex;
     color: var(--primary-color);
-    background-color: var(--light-primary);
+    background-color: var(--secondary-color);
     border-radius: 10px;
     height: calc(var(--baseline) * 10);
+    min-height: calc(var(--baseline) * 10);
     margin: var(--baseline);
     align-items: center;
+    width: 90%;
   }
   li.reversed {
     flex-direction: row-reverse;
   }
 
   .portDetails {
-    margin-left: calc(var(--baseline) * 4);
-    margin-right: calc(var(--baseline) * 4);
+    margin-left: calc(var(--baseline) * 3);
+    margin-right: calc(var(--baseline) * 3);
     height: inherit;
   }
   .portName {
@@ -70,7 +76,11 @@
   class:reversed={iconRight[port.code]}
   class:first={index === 0}
 >
-  <PortIcon text={port.code}/>
+  {#if showIcon}
+    <div out:iconSender|local={{key: port.code}}>
+      <PortIcon text={port.code}/>
+    </div>
+  {/if}
   <div class='portDetails'>
     <p class='portName'>{portName}</p>
     <p class='portTown'>{portTown}</p>

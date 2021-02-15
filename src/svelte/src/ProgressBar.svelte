@@ -1,6 +1,13 @@
 <script lang="ts">
   export let value: number = 0
+  export let fullText: string = '100'
   const progress = value > 100 ? 100 : value
+  let labelText = ''
+  if (progress > 30 && progress < 100) {
+    labelText = `${progress}%`
+  } else if (progress === 100) {
+    labelText = fullText
+  }
 </script>
 
 <style>
@@ -15,7 +22,7 @@
 }
 
 .progress .value:before {
-  color: var(--secondary-color-a);
+  color: var(--highlight-color);
   content: attr(data-label);
   font-size: var(--small-font-size);
   position: absolute;
@@ -44,6 +51,6 @@
   <span
     class="value"
     style="--progress-value: {progress}%"
-    data-label={value >= 30 ? `${progress}%`: ''}
+    data-label={labelText}
   ></span>
 </div>

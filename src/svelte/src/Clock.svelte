@@ -1,36 +1,35 @@
 <script lang="ts">
   export let time: number
 
-  const formatTime = (time: number): string => {
-    const date = new Date(time)
-    return date.toLocaleTimeString(
-      'en',
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }
-    )
-  }
-  const formattedTime = formatTime(time)
-  const [hours, secondsAndMeridiem] = formattedTime.split(':')
+  const date = new Date(time)
+  const formattedTime = date.toLocaleTimeString(
+    'en',
+    {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }
+  )
 </script>
 
 <style>
   .clock {
     border-radius: 0.25em;
-    width: 5em;
-    font-family: var(--lcd-font);
-    line-height: 1.45em;
-    color: var(--secondary-color-a);
-    background-color: var(--light-grey);
+    font-family: var(--sans-serif-font);
+    color: var(--highlight-color);
+    background-color: var(--primary-color);
     text-align: center;
-    display: inline-block;
     user-select: none;
+    -webkit-user-select: none;
     white-space: nowrap;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
-  .blink {
-    animation: blinker 1s step-start infinite;
+  .clocktext {
+    line-height: 100%;
+    display: inline-block;
   }
 
   @keyframes blinker {
@@ -40,4 +39,6 @@
   }
 </style>
 
-<span class="clock">{hours}<span class="blink">:</span>{secondsAndMeridiem}</span>
+<div class="clock">
+  <time datetime={date.toISOString()} class="clocktext">{formattedTime}</time>
+</div>

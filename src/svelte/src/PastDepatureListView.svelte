@@ -1,7 +1,7 @@
 <script lang="ts">
   import Clock from './Clock.svelte'
-import ProgressBar from './ProgressBar.svelte'
-import type { PastDeparture } from './utils/FeasyInterfaces'
+  import ProgressBar from './ProgressBar.svelte'
+  import type { PastDeparture } from './utils/FeasyInterfaces'
   export let departure: PastDeparture
   // departure = {time: number, status: {time: number, status: string}}
   const { time: departureTime, status: statusObj } = departure
@@ -13,7 +13,7 @@ import type { PastDeparture } from './utils/FeasyInterfaces'
   )
   const now = new Date(nowStr).getTime()
   const percentComplete =
-    (now - departureTime) / (arrivalTime - departureTime) * 100
+    Math.round((now - departureTime) / (arrivalTime - departureTime) * 100)
 
   const formatTime = (time: number): string => {
     const date = new Date(time)
@@ -30,26 +30,19 @@ import type { PastDeparture } from './utils/FeasyInterfaces'
 
 <style>
   li {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     color: var(--primary-color);
-    background-color: var(--light-primary);
+    background-color: var(--secondary-color);
     border-radius: var(--baseline);
     height: calc(var(--baseline) * 10);
     margin: var(--baseline);
     justify-content: space-between;
   }
   .departure, .arrival {
-    padding: 0.5em;
-    font-family: var(--serif-font);
-    font-size: var(--smedium-font-size);
-    line-height: var(--smedium-line-height);
-    height: inherit;
+    margin: var(--baseline);
     text-align: center;
-    box-sizing: border-box;
-  }
-  p {
-    margin: 0 0 0.2em 0;
+    font-size: var(--medium-font-size);
   }
   .progress {
     margin-top: calc(var(--baseline) * 2.5);
@@ -61,14 +54,16 @@ import type { PastDeparture } from './utils/FeasyInterfaces'
 
 <li>
     <div class='departure'>
-      <p>Departed</p>
       <Clock time={departureTime} />
     </div>
     <div class='progress'>
-      <ProgressBar value={Math.round(percentComplete)} />
+      {#if percentComplete === 100}
+        <span>Arrived</span>
+      {:else}
+        <ProgressBar value={Math.round(percentComplete)} fullText='Arrived' />
+      {/if}
     </div>
     <div class='arrival'>
-      <p>{arrived ? 'Arrived' : 'ETA'}</p>
       <Clock time={arrivalTime} />
     </div>
 </li>

@@ -35,22 +35,19 @@ import ProgressBar from './ProgressBar.svelte'
 
 <style>
   li {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
     color: var(--primary-color);
-    background-color: var(--light-primary);
+    background-color: var(--secondary-color);
     border-radius: var(--baseline);
     margin: var(--baseline);
     height: calc(var(--baseline) * 10);
     justify-content: space-between;
   }
   .departure {
-    padding: 0.5em;
-    font-family: var(--serif-font);
-    font-size: var(--smedium-font-size);
-    line-height: var(--smedium-line-height);
-    height: inherit;
+    margin: var(--baseline);
+    font-size: var(--medium-font-size);
     text-align: center;
-    box-sizing: border-box;
   }
   .deckspace {
     height: inherit;
@@ -62,16 +59,12 @@ import ProgressBar from './ProgressBar.svelte'
     box-sizing: border-box;
     padding-right: 0.5em;
     padding-top: 0.2em;
-    width: 70%;
   }
   .deckspace > span {
     display: grid;
     grid-template-columns: 1fr 3fr;
     text-align: end;
     margin-left: 0.25em;
-  }
-  p {
-    margin: 0 0 0.2em 0;
   }
   .progress {
     height: 100%;
@@ -81,21 +74,26 @@ import ProgressBar from './ProgressBar.svelte'
 
 <li>
   <div class='departure'>
-    <p>Departs</p>
     <Clock time={departure.time} />
   </div>
   <div class='deckspace'>
       <span>
         Total:
         <span class='progress'>
-          <ProgressBar value={100 - departure.status.percentAvailable} />
+          <ProgressBar
+            value={100 - departure.status.percentAvailable}
+            fullText="Full"
+          />
         </span>
       </span>
-    {#if departure.deckSpace.mixed}
+    {#if Number.isInteger(departure.deckSpace.mixed)}
       <span>
         Mixed:
         <span class='progress'>
-          <ProgressBar value={100 - departure.deckSpace.mixed} />
+          <ProgressBar
+            value={100 - (departure.deckSpace.mixed || 0) }
+            fullText="Full"
+          />
         </span>
       </span>
     {/if}

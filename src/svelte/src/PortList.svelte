@@ -7,6 +7,7 @@
   import type { Port } from './utils/FeasyInterfaces'
 
   export let filter: string = ''
+  export let iconSender: Function
 
   const portsSortOrder = ['LNG', 'HSB', 'NAN', 'DUK', 'TSA', 'SWB']
   const portsSort = (a:Port, b: Port): number =>
@@ -27,14 +28,14 @@
   ul {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     align-content: end;
+    align-items: center;
     list-style-type: none;
     padding: 0;
     margin: 0;
-    flex-basis: 0;
-    flex-grow: 1;
-    flex-shrink: 1;
     overflow-y: scroll;
+    height: 100%;
   }
 </style>
 
@@ -42,6 +43,7 @@
   <ul use:scrollShadow transition:fly={{y: 500}}>
     {#each sortedPorts as port, index (port)}
       <PortListItem
+        {iconSender}
         {port}
         {index}
         on:portSelected

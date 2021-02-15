@@ -9,7 +9,7 @@
   .circle {
     height: var(--size);
     width: var(--size);
-    border-color: var(--primary-color) transparent var(--primary-color) var(--primary-color);
+    border-color: var(--highlight-color) transparent var(--highlight-color) var(--highlight-color);
     border-width: calc(var(--size) / 15);
     border-style: solid;
     border-image: initial;

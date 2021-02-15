@@ -75,6 +75,9 @@ const RoutePageParser = (page: string) => {
   }
 
   const parsePercent = (percentString: string): number | undefined => {
+    if (percentString.toUpperCase() === 'FULL') {
+      return 0
+    }
     if (percentString && percentString.length > 2) {
       return parseInt(percentString.slice(0, -1))
     }

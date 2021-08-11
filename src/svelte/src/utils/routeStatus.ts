@@ -24,8 +24,7 @@ const routeStatus = async (originCode: string, destinationCode: string) => {
     destination.code == destinationCode
   ) || <DestinationPort>{}
 
-  const routeStatusUrl =
-    `${origin.travelRouteName}-${destination.travelRouteName}/${origin.code}-${destination.code}`
+  const routeStatusUrl = `${origin.code}-${destination.code}`
 
   const routeStatusPageString = await Communicator.getRouteInfo(routeStatusUrl)
   const parser = routePageParser(routeStatusPageString)

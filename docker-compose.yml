@@ -1,27 +1,20 @@
-version: '3'
+version: '3.9'
 services:
   web:
-    build: .
-    command: 'bundle exec puma -p 8080'
+    image: 'node:16.11-bullseye-slim'
+    command: bash -c 'npm install && npm run dev -- --open --host'
+    ports:
+      - '3000:3000'
+    working_dir: '/feasyberries'
+    expose:
+      - '3000'
     volumes:
       - '.:/feasyberries'
       - node_modules:/feasyberries/node_modules
-    ports:
-      - '8080:8080'
-    working_dir: '/feasyberries'
     environment:
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - redis
-  svelte_builder:
-    build: .
-    command: bash -c "npm install && npm run dev"
-    working_dir: '/feasyberries/src/svelte'
-    volumes:
-      - '.:/feasyberries'
-      - 'svelte_node_modules:/feasyberries/src/svelte/node_modules'
-    ports:
-      - '35729:35729'
+      - VITE_ENVIRONMENT=development
+      - VITE_REDIS_URL=redis://redis:6379/0
+    restart: on-failure
   redis:
     image: "redis:alpine"
     command: redis-server
@@ -29,4 +22,3 @@ services:
       - '6379:6379'
 volumes:
   node_modules:
-  svelte_node_modules:

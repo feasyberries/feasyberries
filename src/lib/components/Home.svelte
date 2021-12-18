@@ -142,6 +142,7 @@
 
   :global(body) {
     height: 100%;
+    margin: 0;
   }
 
   .titleContainer {

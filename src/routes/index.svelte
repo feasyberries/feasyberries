@@ -8,11 +8,6 @@
       baseliner = new Baseliner(6);
     }
   </script> -->
-  <style>
-    body {
-      margin: 0;
-    }
-  </style>
 </svelte:head>
 
 <style>

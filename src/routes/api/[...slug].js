@@ -5,14 +5,16 @@ import { createClient } from 'redis';
 export async function get({ params }) {
   console.log('slug.json: ', params);
   const { slug } = params;
-  const redis = createClient(import.meta.env.VITE_REDIS_URL);
+  const redis = createClient({
+    url: import.meta.env.VITE_REDIS_URL
+  });
   redis.on('error', (err) => console.error(err));
   const expire_seconds = 120;
 
   await redis.connect();
   console.log('redis connected');
-  // let redis_cache = await redis.get(params.slug);
-  let redis_cache = '';
+  let redis_cache = await redis.get(params.slug);
+  // let redis_cache = '';
   const now = Date.now();
 
   if (!redis_cache) {
@@ -20,9 +22,6 @@ export async function get({ params }) {
     const processed_response = slug.startsWith('current-conditions')
       ? await response.text()
       : await response.json();
-    // if (!slug.startsWith('current_conditions')) {
-    //   console.log('processedresponse:', processed_response);
-    // }
     const payload = JSON.stringify({
       page: processed_response,
       expires: now + expire_seconds

@@ -10,8 +10,7 @@ export const routes = [
 	// src/routes/index.svelte
 	[/^\/$/, [c[0], c[2]], [c[1]]],
 
-	// src/routes/api/[...slug].js
-	[/^\/api(?:\/(.*))?$/]
+	
 ];
 
 // we import the root layout/error components eagerly, so that

@@ -5,7 +5,10 @@ import { createClient } from 'redis';
 export async function get({ params }) {
   console.log('slug.json: ', params);
   const { slug } = params;
-  const redis = createClient(import.meta.env.VITE_REDIS_URL);
+  console.log("Connecting to Redis: ", import.meta.env.VITE_REDIS_URL);
+  const redis = createClient({
+    url: import.meta.env.VITE_REDIS_URL
+  });
   redis.on('error', (err) => console.error(err));
   const expire_seconds = 120;
 

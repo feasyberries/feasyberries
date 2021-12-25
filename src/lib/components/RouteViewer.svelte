@@ -60,11 +60,6 @@
     font-size: var(--medium-font-size);
     margin: 0 auto;
   }
-  .spinnerContainer {
-    position: absolute;
-    top: 40%;
-    left: calc(50% - 30px)
-  }
 </style>
 
 <section

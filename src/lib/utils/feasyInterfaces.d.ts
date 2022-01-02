@@ -1,6 +1,6 @@
 export interface CommunicatorObject {
   getAllPorts: () => Promise<Array<OriginPort>>
-  getRouteInfo: (uri: string) => Promise<string>
+  getRouteInfo: (uri: string) => Promise<{page: string, expires: number}>
 }
 
 export interface DeparturesFunc {
@@ -48,6 +48,7 @@ export interface PastStatus {
 }
 
 export interface FutureStatus {
+  cancelled?: boolean,
   percentAvailable: number
 }
 
@@ -77,6 +78,7 @@ export interface PastDeparture {
 export interface DeparturesList {
   future: Array<FutureDeparture>
   past: Array<PastDeparture>
+  expires: number
 }
 
 // export type {

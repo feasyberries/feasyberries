@@ -11,7 +11,7 @@ export async function get({ params }) {
   const redis_uri = new URL(REDIS_URL);
 
   let redis_options = {}
-  if (redis_uri.protocol == "rediss://") {
+  if (redis_uri.protocol == "rediss:") {
     console.log('this piece of shit wants tls redis:', REDIS_URL);
     redis_options = { tls: { rejectUnauthorized: false }}
   }

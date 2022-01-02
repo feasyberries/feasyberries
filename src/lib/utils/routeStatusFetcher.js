@@ -11,14 +11,14 @@ const routeStatusFetcher = async () => {
   const originCodeString = get(originCode);
   const destinationCodeString = get(destinationCode);
   const portsMap = get(ports);
-  console.log('this fuckin portsmap', portsMap);
   /** @type {OriginPort} */
   let origin = portsMap.get(originCodeString);
+
+  /** @type {DestinationPort} */ // @ts-ignore:
   const destination = origin.destinationRoutes.find(
     /** @param {DestinationPort} destination */
     destination => destination.code == destinationCodeString
-  ) || (/** @type {DestinationPort} */ {});
-  // console.log(`grabbing the destination port ${originCodeString} and its:`, destination);
+  ) || {};
 
   const routeStatusUrl = `${origin.code}-${destination.code}`;
 

@@ -5,31 +5,39 @@
   import PortList from './PortList.svelte';
   import RouteViewer from './RouteViewer.svelte';
   import feasyStateMachine from '$lib/utils/feasyStateMachine';
-  import { originCode, destinationCode } from '$lib/utils/userInputStore';
+  import { originCode, destinationCode, departureTime } from '$lib/utils/userInputStore';
   import CircleSpinner from './CircleSpinner.svelte';
 
   const [originSend, originReceive] = crossfade({duration: 150});
   const [destinationSend, destinationReceive] = crossfade({duration: 150});
 
-  /**
-   *
-   * @param {CustomEvent} _e
-   */
-  const onBackButton = (_e) => {
+  /** @param {CustomEvent} _event */
+  const onBackButton = (_event) => {
     feasyStateMachine.back();
   };
 
+  /** @param {CustomEvent} _event */
   const setOriginCode = (event) => {
     const newOriginCode = event.detail;
     originCode.set(newOriginCode);
     feasyStateMachine.originSelected();
   };
 
+  /** @param {CustomEvent} _event */
   const setDesitationCode = (event) => {
     const newDestinationCode = event.detail;
     destinationCode.set(newDestinationCode);
     feasyStateMachine.destinationSelected();
-  }
+  };
+
+  /** @param {CustomEvent} _event */
+  const setDepartureTime = (event) => {
+    if ($feasyStateMachine == "awaitTime") {
+      const newTime = event.detail;
+      departureTime.set(newTime);
+      feasyStateMachine.timeSelected();
+    }
+  };
 
   /** @type {string} */
   let title = 'Origin?';
@@ -212,8 +220,8 @@
       iconSender={destinationSend}
       on:portSelected={setDesitationCode}
     />
-  { :else if $feasyStateMachine == 'awaitTime' }
-    <RouteViewer />
+  { :else if ['awaitTime', 'awaitExpiry', 'loadRefresh'].includes($feasyStateMachine) }
+    <RouteViewer on:timeSelected={setDepartureTime} />
   { /if }
   {#if ['awaitDestination', 'awaitTime', 'awaitExpiry'].includes($feasyStateMachine)}
     <BackButton on:backButton={onBackButton}/>

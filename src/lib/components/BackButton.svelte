@@ -1,16 +1,13 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import { createEventDispatcher } from 'svelte';
-  import PortIcon from "./PortIcon.svelte"
-  const dispatchEvent = createEventDispatcher()
+  import PortIcon from "./PortIcon.svelte";
+  const dispatchEvent = createEventDispatcher();
 
-  /**
-   *
-   * @param {Event} _
-   */
+  /** @param {Event} _ */
   const backButton = (_) => {
-    dispatchEvent('backButton')
-  }
+    dispatchEvent('backButton');
+  };
 </script>
 
 <style>

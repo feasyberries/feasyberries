@@ -2,20 +2,16 @@
   import PastDepatureListView from './PastDepatureListView.svelte';
   import FutureDepartureListView from './FutureDepatureListView.svelte';
   import scrollShadow from '../utils/scrollShadow';
-  import Clock from './Clock.svelte';
-  import { blur, fly } from 'svelte/transition';
-  // import CircleSpinner from './CircleSpinner.svelte';
+  import UpdatingClock from './UpdatingClock.svelte';
+  import { fly } from 'svelte/transition';
   import { currentRouteStore } from '$lib/utils/currentRouteStore';
+  import RefreshingDeparture from './RefreshingDeparture.svelte';
+  import { departureTime } from '$lib/utils/userInputStore';
+
+  /** @type {number} */
 
   /** @type {HTMLElement} */
   let section;
-
-  const nowStr = new Date().toLocaleString(
-    "en-US",
-    { timeZone: "America/Vancouver" }
-  );
-
-  const now = new Date(nowStr).getTime();
 
   const scrollToNow = () => {
     /** @type {HTMLElement} */
@@ -75,11 +71,15 @@
     {/each}
   </ul>
   <div class="currentTime">
-    <Clock time={now}/>
+    <UpdatingClock />
   </div>
   <ul class="futureDepartures">
     {#each $currentRouteStore.future as futureDeparture}
-      <FutureDepartureListView departure={futureDeparture} />
+      {#if futureDeparture.time == $departureTime}
+        <RefreshingDeparture />
+      {:else}
+        <FutureDepartureListView departure={futureDeparture} on:timeSelected />
+      {/if}
     {/each}
   </ul>
 </section>

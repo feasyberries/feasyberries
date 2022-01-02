@@ -1,68 +1,60 @@
 import { createClient } from 'redis';
+import fetchRetry from '$lib/utils/fetchRetry';
+import { getEpoch } from "$lib/utils/timeUtils";
 
-// import.meta.env.VITE_ENVIRONMENT
 /** @type {import('@sveltejs/kit').RequestHandler} */
 export async function get({ params }) {
-  console.log('slug.json: ', params);
   const { slug } = params;
-  console.log("Connecting to Redis: ", import.meta.env.VITE_REDIS_URL);
-  const redis = createClient({
-    url: import.meta.env.VITE_REDIS_URL
-  });
+  const redisClientOptions =
+    (import.meta.env.VITE_REDIS_URL === 'redis://redis:6379/0')
+    ? { url: import.meta.env.VITE_REDIS_URL }
+    : {
+      url: import.meta.env.VITE_REDIS_URL,
+      socket: {
+        tls: true,
+        rejectUnauthorized: false,
+      }
+    }
+  // @ts-ignore
+  const redis = createClient(redisClientOptions);
   redis.on('error', (err) => console.error(err));
-  const expire_seconds = 120;
+  const expire_seconds = 30;
 
   await redis.connect();
-  console.log('redis connected');
-  // let redis_cache = await redis.get(params.slug);
-  let redis_cache = '';
-  const now = Date.now();
+  let redis_cache = await redis.get(slug);
+  const now = getEpoch();
 
   if (!redis_cache) {
     const response = await net_request(slug);
     const processed_response = slug.startsWith('current-conditions')
       ? await response.text()
       : await response.json();
-    // if (!slug.startsWith('current_conditions')) {
-    //   console.log('processedresponse:', processed_response);
-    // }
-    const payload = JSON.stringify({
+    const payload_object = {
       page: processed_response,
       expires: now + expire_seconds
+    };
+    const payload = JSON.stringify(payload_object);
+    await redis.set(slug, payload, {
+      EX: expire_seconds,
     });
-    // await redis.setEx(slug, expire_seconds, payload);
     redis_cache = payload;
   } else {
-    console.log('found in redis cache: ', params.slug);
+    if (import.meta.env.VITE_ENVIRONMENT === 'development') {
+      console.log(`REDIS - found in cache: ${slug}`)
+    }
   }
+
   if (redis_cache) {
-    return { body: redis_cache };
+    const ttl = await redis.ttl(slug);
+    return {
+      body: redis_cache,
+    };
   }
 }
 
 const net_request = async (slug) => {
   const root_url = 'https://www.bcferries.com/';
   const full_url = root_url + slug;
-  console.log('net_request ', full_url);
   const response = await fetchRetry(full_url, 1000, 3, { method: 'GET' })
   return response;
 }
-
-function wait(delay){
-  return new Promise((resolve) => setTimeout(resolve, delay));
-}
-
-// this seemed a better fetch-with-retry than mine, stolen from:
-// https://stackoverflow.com/questions/46175660/fetch-retry-request-on-failure
-function fetchRetry(url, delay, tries, fetchOptions = {}) {
-  console.log('[slug].js fetchRetry', url);
-  function onError(err){
-    const triesLeft = tries - 1;
-    if(!triesLeft){
-      throw err;
-    }
-    return wait(delay).then(() => fetchRetry(url, delay, triesLeft, fetchOptions));
-  }
-  return fetch(url, fetchOptions).catch(onError);
-}
-

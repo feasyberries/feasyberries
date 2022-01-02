@@ -1,8 +1,21 @@
+
 <script lang="ts">
+  /** @typedef {import('./feasyInterfaces.d').FutureDeparture} FutureDeparture */
+
   import Clock from './Clock.svelte'
   import ProgressBar from './ProgressBar.svelte'
-  import type { FutureDeparture } from './utils/FeasyInterfaces'
-  export let departure: FutureDeparture
+  import { createEventDispatcher } from 'svelte';
+
+  /** @type {FutureDeparture} */
+  export let departure
+
+  const dispatchEvent = createEventDispatcher()
+
+  const selectTime = (_) => {
+    if (!departure.status.cancelled) {
+      dispatchEvent('timeSelected', departure.time);
+    }
+  }
 </script>
 
 <style>
@@ -42,9 +55,12 @@
     height: 100%;
     width: 100%;
   }
+  .cancelled {
+    background-color: #fac6c6;
+  }
 </style>
 
-<li>
+<li on:click={selectTime} class:cancelled={departure.status.cancelled}>
   <div class='departure'>
     <Clock time={departure.time} />
   </div>
@@ -52,10 +68,14 @@
       <span>
         Total:
         <span class='progress'>
-          <ProgressBar
-            value={100 - departure.deckSpace.total}
-            fullText="Full"
-          />
+          {#if (departure.status.cancelled)}
+            <ProgressBar value={100} fullText="Cancelled" />
+          {:else}
+            <ProgressBar
+              value={100 - departure.deckSpace.total}
+              fullText="Full"
+            />
+          {/if}
         </span>
       </span>
     {#if Number.isInteger(departure.deckSpace.mixed)}

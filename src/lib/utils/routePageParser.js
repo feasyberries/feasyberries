@@ -4,60 +4,28 @@
 /** @typedef {import('./feasyInterfaces.d').FutureDeparture} FutureDeparture */
 /** @typedef {import('./feasyInterfaces.d').DeckSpace} DeckSpace */
 
+import { parseTime } from "./timeUtils";
+
 /**
  * @param {string | null} str
  * @returns {string}
  */
 const cleanString = (str) => {
-  // console.log(`cleanString():`, str)
   if (str) {
     return str.trim().replace(/\r?\n|\r|/g,'').replace(/  +/g, ' ');
   }
   return '';
 };
 
-// const parking available = querySelector('.t-parking-padding').querySelector('header').textContent.trim().replace(/\r?\n|\r|/g,'').replace(/  +/g, ' ')
-// const sailingDuration = tableRows[0].querySelector('b').textContent.trim()
-
 /**
- * @param {string} page
+ * @param {Object} obj
+ * @param {string} obj.page
+ * @param {number} obj.expires
  * @returns {object}
  */
-const RoutePageParser = (page) => {
-  // console.log(`RoutePageParser:`, page)
+const RoutePageParser = ({page, expires}) => {
   let parser = new DOMParser();
   const doc = parser.parseFromString(page, "text/html");
-  // console.log(`RoutePageParser doc:`, doc)
-  /** @param {string} fullTimeString */
-  const parseTime = (fullTimeString) => {
-    // console.log(`parseTime(${fullTimeString})`)
-    const [timeString, meridiem] = fullTimeString.split(' ');
-    let [hours, minutes] = timeString.split(':').map(
-      /** @param {string} x */
-      x => parseInt(x)
-    );
-    if (meridiem.toUpperCase() === 'PM' && hours !== 12) {
-      // console.log('its pm')
-      hours = hours + 12;
-    }
-
-    const nowStr = new Date().toLocaleString(
-      "en-US",
-      { timeZone: "America/Vancouver" }
-    );
-    // console.log('whats anowstr', nowStr)
-    const now = new Date(nowStr);
-    // console.log('now:', now)
-    const timeToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      hours,
-      minutes
-    );
-    // console.log(`Today at ${hours} ${minutes}: `, timeToday)
-    return timeToday.getTime();
-  };
 
   /**
    * @param {string} statusString
@@ -65,7 +33,6 @@ const RoutePageParser = (page) => {
    */
   const parsePastStatus = (statusString) => {
     const statusArray = statusString.split(' ');
-    // console.log(`arsing past status time, parseTime(${timeStr} ${meridiem})`)
     let /** @type {string} */ status,
         /** @type {string} */ timeStr,
         /** @type {string} */ meridiem;
@@ -87,6 +54,12 @@ const RoutePageParser = (page) => {
    * @returns {FutureStatus}
    */
   const parseFutureStatus = (statusString) => {
+    if (statusString == 'Cancelled') {
+      return {
+        percentAvailable: 0,
+        cancelled: true
+      }
+    }
     const [percentStr, _availableStr] = statusString.split(' ');
     return {
       percentAvailable: parseInt(percentStr.slice(0, -1))
@@ -113,20 +86,18 @@ const RoutePageParser = (page) => {
     /** @type {DeparturesList} */
     let departures = {
       future: [],
-      past: []
+      past: [],
+      expires: expires
     };
     const departuresTable = doc.querySelector('.detail-departure-table');
     if (departuresTable) {
       const tableRows = departuresTable.querySelectorAll('tr');
       for (let i = 0; i < tableRows.length; i++) {
-        // console.log(`RoutePageParser#departures  tableRow[${i}]`)
         if (i < 2) {
-          // console.log('RoutePageParser#departures  skip row')
           continue;
         }
         let tableRow = tableRows[i];
         if (!tableRow.classList.contains('toggle-div')) {
-          // console.log(`RoutePageParser#departures  row should contain time and status`)
           // describes a departure
           const [timeElement, statusElement, togglerElement] = Array.from(
             tableRow.querySelectorAll('td')
@@ -136,10 +107,8 @@ const RoutePageParser = (page) => {
           const statusString = cleanString(statusElement.textContent);
 
           if (togglerElement.classList.contains('toggle-arrow')) {
-            // console.log('RoutePageParser#departures  row has further info')
             // a future departure
             const extraInfo = tableRows[i+1];
-            // console.log('RoutePageParser#departures  further info should be here:', extraInfo)
             const ferryData = extraInfo.querySelector('.sailing-ferry-name');
             const deckSpaceData = extraInfo.querySelector('#deckSpace');
 
@@ -151,7 +120,6 @@ const RoutePageParser = (page) => {
                 standardSpace,
                 mixedSpace
               ] = Array.from(deckSpaceData.querySelectorAll('.progress-bar'));
-              // console.log('wtf is the deckspace [total, standard, mixed]:', totalSpace, standardSpace, mixedSpace )
               deckSpaceObject = {
                 total: parsePercent(cleanString(totalSpace?.children[0].textContent)),
                 standard: parsePercent(cleanString(standardSpace?.children[0].textContent)),
@@ -174,7 +142,6 @@ const RoutePageParser = (page) => {
 
             departures.future.push(futureDeparture);
           } else {
-            // console.log('RoutePageParser#departures no toggle arrow, its a past departure')
 
             // a past departure
             departures.past.push(
@@ -186,11 +153,6 @@ const RoutePageParser = (page) => {
           }
         }
       }
-    } else {
-      departures = {
-        future: [],
-        past: []
-      };
     }
 
     return departures;

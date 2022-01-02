@@ -7,6 +7,7 @@ import Communicator from './communicator';
 const initialValue = new Map;
 
 /**
+ * @param {Function} set
  * @returns {Promise<void>}
  */
 const fetchPorts = async (set) => {
@@ -19,6 +20,7 @@ const fetchPorts = async (set) => {
   });
 }
 
+// @ts-ignore
 const portStore = writable(initialValue, fetchPorts);
 
 const refreshPorts = () => fetchPorts(portStore.set);

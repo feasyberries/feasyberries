@@ -33,7 +33,6 @@
 
   /** @param {Event} _ */
   const clickHandler = (_) => {
-    console.log('we clickin');
     showIcon = false;
     portSelected(port);
   }

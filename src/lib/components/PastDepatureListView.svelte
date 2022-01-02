@@ -2,34 +2,17 @@
   /** @typedef {import('../utils/feasyInterfaces').PastDeparture} PastDeparture */
   import Clock from './Clock.svelte';
   import ProgressBar from './ProgressBar.svelte';
+  import { vancouverTime } from '$lib/utils/timeUtils';
 
   /** @type {PastDeparture} */
   export let departure;
-  // departure = {time: number, status: {time: number, status: string}}
 
   const { time: departureTime, status: statusObj } = departure;
   const { time: arrivalTime, status: statusStr } = statusObj;
-  const arrived = statusStr?.toUpperCase() === "ARRIVED";
-  const nowStr = new Date().toLocaleString(
-    "en-US",
-    { timeZone: "America/Vancouver" }
-  );
-  const now = new Date(nowStr).getTime();
   const percentComplete =
-    Math.round((now - departureTime) / (arrivalTime - departureTime) * 100);
-
-  /** @param {number} time */
-  const formatTime = (time) => {
-    const date = new Date(time)
-    return date.toLocaleTimeString(
-      'en',
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }
-    )
-  };
+    Math.round(
+      (vancouverTime() - departureTime) / (arrivalTime - departureTime) * 100
+    );
 </script>
 
 <style>

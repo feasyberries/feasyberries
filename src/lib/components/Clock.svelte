@@ -1,16 +1,11 @@
 <script lang="ts">
+  import { formatTime } from '$lib/utils/timeUtils';
+
   /** @type {number} */
   export let time;
 
   const date = new Date(time);
-  const formattedTime = date.toLocaleTimeString(
-    'en',
-    {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    }
-  );
+  const formattedTime = formatTime(time);
 </script>
 
 <style>

@@ -34,6 +34,8 @@ export async function get({ params }) {
       : await response.json();
 
     console.log('got past it!');
+    const didIt = slug.startsWith('current-conditions');
+    console.log(`parsed as text? ${didIt} heres the raw bullshit:`, parsedResponse);
     const payload_object = {
       page: parsedResponse,
       expires: now + expire_seconds

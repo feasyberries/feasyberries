@@ -50,7 +50,7 @@ export async function get({ params }) {
 
   if (redis_cache) {
     console.log('returning api response here its definitely a JSON string:', typeof(redis_cache));
-    console.log('and if its a string we can parse it:', JSON.parse(redis_cache));
+    console.log('why wont this piece of shit parse?:', redis_cache);
     return {
       body: redis_cache,
     };

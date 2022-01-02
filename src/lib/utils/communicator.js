@@ -26,24 +26,10 @@ const host = (import.meta.env.VITE_ENVIRONMENT === 'development')
 /** @type {CommunicatorObject} */
 const Communicator = {
   getAllPorts: async () => {
-    console.log('getting all ports');
     return request('GET', `${host}/api/cc-route-info`, {})
       .then(response => response.json())
       .then(data => data['page'])
-      .catch(err => {
-        console.log("getAllPorts failed somehow:");
-        console.error(err);
-      });
-    // if (response.status === 200) {
-    //   console.log('maybe it crashes here?');
-    //   console.log('is it still a string??', typeof(response.body));
-    //   console.log('the fuck are your keys then', Object.keys(response.body));
-    //   const parsedJson = await response.json();
-    //   console.log('no it didnt');
-    //   return parsedJson["page"];
-    // } else {
-    //   return [];
-    // }
+      .catch(console.error);
   },
   getRouteInfo: async (uri) => {
     let response = await request('GET', `${host}/api/current-conditions/${uri}`, {});

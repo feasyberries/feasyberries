@@ -9,9 +9,15 @@ export async function get({ params }) {
 
   const REDIS_URL = String(import.meta.env.VITE_REDIS_URL);
   const redis_uri = new URL(REDIS_URL);
-  const redis = (redis_uri.protocol == "rediss://")
-    ? new Redis(REDIS_URL, { tls: { rejectUnauthorized: false }})
-    : new Redis(REDIS_URL);
+
+  let redis_options = {}
+  if (redis_uri.protocol == "rediss://") {
+    console.log('this piece of shit wants tls redis:', REDIS_URL);
+    redis_options = { tls: { rejectUnauthorized: false }}
+  }
+  console.log('okay you piece of shit, lets connect to redis:');
+  console.log(`redis = new Redis(${REDIS_URL}, ${JSON.stringify(redis_options, null, 2)})`);
+  const redis = new Redis(REDIS_URL, redis_options);
 
   const expire_seconds = 30;
 

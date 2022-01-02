@@ -3,7 +3,6 @@ services:
   web:
     image: 'node:17.3-bullseye'
     command: bash -c 'npm install && npm run dev -- --open --host'
-    # command: bash -c 'npm install && npm run preview'
     ports:
       - '3000:3000'
     working_dir: '/feasyberries'

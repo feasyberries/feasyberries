@@ -1,3 +1,4 @@
 logs
 *_temp/
 .DS_Store
+node_modules

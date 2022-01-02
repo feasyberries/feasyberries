@@ -10,7 +10,7 @@ export async function get({ params }) {
   const REDIS_URL = String(import.meta.env.VITE_REDIS_URL);
   const redis_uri = new URL(REDIS_URL);
   const redis = (redis_uri.protocol == "rediss://")
-    ? new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false }})
+    ? new Redis(REDIS_URL, { tls: { rejectUnauthorized: false }})
     : new Redis(REDIS_URL);
 
   const expire_seconds = 30;

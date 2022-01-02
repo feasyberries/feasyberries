@@ -9,18 +9,9 @@ export async function get({ params }) {
 
   const REDIS_URL = String(import.meta.env.VITE_REDIS_URL);
   const redis_uri = new URL(REDIS_URL);
-  const redisOptions = (redis_uri.protocol == "rediss://")
-    ? {
-        port: Number(redis_uri.port),
-        host: redis_uri.hostname,
-        password: redis_uri.password,
-        db: 0,
-        tls: {
-          rejectUnauthorized: false,
-        },
-      }
-    : REDIS_URL;
-  const redis = new Redis(redisOptions);
+  const redis = (redis_uri.protocol == "rediss://")
+    ? new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false }})
+    : new Redis(REDIS_URL);
 
   const expire_seconds = 30;
 

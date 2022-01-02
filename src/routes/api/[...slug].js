@@ -43,6 +43,7 @@ export async function get({ params }) {
   }
 
   if (redis_cache) {
+    console.log('returning api response here');
     return {
       body: redis_cache,
     };

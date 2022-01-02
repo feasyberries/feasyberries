@@ -28,7 +28,9 @@ const Communicator = {
   getAllPorts: async () => {
     let response = await request('GET', `${host}/api/cc-route-info`, {});
     if (response.status === 200) {
+      console.log('maybe it crashes here?');
       const parsedJson = await response.json();
+      console.log('no it didnt');
       return parsedJson["page"];
     } else {
       return [];

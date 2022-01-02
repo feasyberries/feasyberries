@@ -15,6 +15,9 @@ console.log('okay you piece of shit, lets connect to redis:');
 console.log(`redis = new Redis(${REDIS_URL}, ${JSON.stringify(redis_options, null, 2)})`);
 const redis = new Redis(REDIS_URL, redis_options);
 
+console.log('flush the damn db because it sucks');
+redis.flushdb();
+
 /** @type {import('@sveltejs/kit').RequestHandler} */
 export async function get({ params }) {
   console.log('[...slug].js: request for ', params.slug);

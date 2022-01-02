@@ -1,26 +1,29 @@
-import { createClient } from 'redis';
+import Redis from 'ioredis';
 import fetchRetry from '$lib/utils/fetchRetry';
 import { getEpoch } from "$lib/utils/timeUtils";
+import { URL } from 'url';
 
 /** @type {import('@sveltejs/kit').RequestHandler} */
 export async function get({ params }) {
   const { slug } = params;
-  const redisClientOptions =
-    (import.meta.env.VITE_REDIS_URL === 'redis://redis:6379/0')
-    ? { url: import.meta.env.VITE_REDIS_URL }
-    : {
-      url: import.meta.env.VITE_REDIS_URL,
-      socket: {
-        tls: true,
-        rejectUnauthorized: false,
+
+  const REDIS_URL = String(import.meta.env.VITE_REDIS_URL);
+  const redis_uri = new URL(REDIS_URL);
+  const redisOptions = (redis_uri.protocol == "rediss://")
+    ? {
+        port: Number(redis_uri.port),
+        host: redis_uri.hostname,
+        password: redis_uri.password,
+        db: 0,
+        tls: {
+          rejectUnauthorized: false,
+        },
       }
-    }
-  // @ts-ignore
-  const redis = createClient(redisClientOptions);
-  redis.on('error', (err) => console.error(err));
+    : REDIS_URL;
+  const redis = new Redis(redisOptions);
+
   const expire_seconds = 30;
 
-  await redis.connect();
   let redis_cache = await redis.get(slug);
   const now = getEpoch();
 
@@ -34,9 +37,7 @@ export async function get({ params }) {
       expires: now + expire_seconds
     };
     const payload = JSON.stringify(payload_object);
-    await redis.set(slug, payload, {
-      EX: expire_seconds,
-    });
+    await redis.set(slug, payload, 'ex', expire_seconds);
     redis_cache = payload;
   } else {
     if (import.meta.env.VITE_ENVIRONMENT === 'development') {
@@ -45,7 +46,6 @@ export async function get({ params }) {
   }
 
   if (redis_cache) {
-    const ttl = await redis.ttl(slug);
     return {
       body: redis_cache,
     };

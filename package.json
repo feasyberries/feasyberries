@@ -21,7 +21,7 @@
     "eslint-plugin-svelte3": "^3.2.1",
     "prettier": "^2.4.1",
     "prettier-plugin-svelte": "^2.4.0",
-    "redis": "^4.0.0",
+    "ioredis": "^4.28.0",
     "svelte": "^3.42.6",
     "svelte-check": "^2.2.6",
     "svelte-fsm": "^1.0.0",

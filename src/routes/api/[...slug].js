@@ -18,7 +18,7 @@ redis.flushdb();
 export async function get({ params }) {
   const { slug } = params;
 
-  const expire_seconds = 30;
+  const expire_seconds = 120;
 
   let redis_cache = await redis.get(slug);
   const now = getEpoch();

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { countdownStore } from '$lib/utils/countdownStore';
 
-  const maxPercent = 30;
+  const maxPercent = 120;
   const radius = 40;
   const circumference = Math.PI * (radius * 2);
   let percentFill;

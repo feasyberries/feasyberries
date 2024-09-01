@@ -1,0 +1,14 @@
+stateDiagram-v2
+    state freshDataInStorage <<choice>>
+    [*] --> freshDataInStorage: loadDataFromStorage
+    freshDataInStorage --> Fetching : fail
+    freshDataInStorage --> DataLoaded: success
+    DataLoaded --> DataSaved: saveDataToStorage
+    DataSaved --> AwaitExpire: setExpireTimeout
+    Fetching --> FetchSuccess: success
+    Fetching --> FetchError: fail
+    FetchError --> FetchError.AwaitRetry: setRetryTimout
+    FetchError.AwaitRetry --> Fetching: onRetry
+    AwaitExpire --> DataExpired: onExpire
+    DataExpired --> Fetching: initiateFetch
+    FetchSuccess --> DataSaved: saveDataToStorage

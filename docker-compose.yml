@@ -1,24 +1,24 @@
-version: '3.9'
 services:
   web:
-    image: 'node:17.3-bullseye'
-    command: bash -c 'npm install && npm run dev -- --open --host'
+    build: .
+    command: bash -c 'pnpm install && pnpm run dev --host'
     ports:
-      - '3000:3000'
+      - 5173:5173
+      - 3140:3140
+      - 9315:9315
     working_dir: '/feasyberries'
     expose:
-      - '3000'
+      - 5173
+      - 3140
+      - 9315
     volumes:
       - '.:/feasyberries'
       - node_modules:/feasyberries/node_modules
+      - pnpm-store:/feasyberries/.pnpm-store
+      - svelte-kit:/feasyberries/.svelte-kit
     environment:
       - VITE_ENVIRONMENT=development
-      - VITE_REDIS_URL=redis://redis:6379/0
-    restart: on-failure
-  redis:
-    image: "redis:alpine"
-    command: redis-server
-    ports:
-      - '6379:6379'
 volumes:
   node_modules:
+  pnpm-store:
+  svelte-kit:

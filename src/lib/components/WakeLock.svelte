@@ -25,7 +25,6 @@
 	);
 
 	function update_now() {
-		console.log('update now!', Math.random());
 		now = Date.now();
 	}
 

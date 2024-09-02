@@ -12,11 +12,6 @@
 	import { route_code_to_names } from '$lib/codesToNames';
 	import { page } from '$app/stores';
 	import { onNavigate } from '$app/navigation';
-	import { VERSION } from 'svelte/compiler';
-
-	$effect(() => console.log('page params:', $page.params));
-
-	$effect(() => console.log(VERSION));
 
 	let { children } = $props();
 
@@ -48,9 +43,9 @@
 		}
 	});
 
-	$inspect(api.state).with((type, state) =>
-		console.log(`api.state: ${type}`, state)
-	);
+	// $inspect(api.state).with((type, state) =>
+	// 	console.log(`api.state: ${type}`, state)
+	// );
 </script>
 
 <Header />

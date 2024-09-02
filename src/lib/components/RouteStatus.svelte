@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RightArrowIcon from './icons/RightArrowIcon.svelte';
 	import { getApi } from '$lib/ApiContext';
+	import { base } from '$app/paths';
 
 	const api = getApi();
 </script>
@@ -12,7 +13,9 @@
 		</span>
 
 		{#if api.destination}
-			<RightArrowIcon width="3rem" height="3rem" />
+			<a href="{base}/{api.destination}{api.origin}">
+				<RightArrowIcon width="3rem" height="3rem" />
+			</a>
 			<span class="terminal-pill">
 				{api.destination}
 			</span>
@@ -44,5 +47,8 @@
 	h3 {
 		color: var(--pico-primary-inverse);
 		margin: 0;
+	}
+	a {
+		color: unset;
 	}
 </style>

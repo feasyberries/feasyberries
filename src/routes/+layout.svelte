@@ -57,6 +57,7 @@
 <style>
 	main {
 		height: calc(100dvh - var(--size-11));
+		overflow: auto;
 		display: flex;
 		flex-direction: column;
 	}
@@ -122,5 +123,9 @@
 		display: grid;
 		place-items: center;
 		height: var(--size-8);
+	}
+
+	main :global(ul) {
+		padding-left: 0;
 	}
 </style>

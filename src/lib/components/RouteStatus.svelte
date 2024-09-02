@@ -39,7 +39,7 @@
 		height: var(--size-9);
 		min-height: var(--size-9);
 		position: sticky;
-		top: var(--size-11);
+		top: 0;
 		color: var(--pico-primary-inverse);
 		padding-left: 2rem;
 		padding-right: 2rem;

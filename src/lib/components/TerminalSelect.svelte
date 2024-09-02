@@ -2,6 +2,7 @@
 	import LinkAsButton from './LinkAsButton.svelte';
 	import { terminal_code_to_name } from '$lib/codesToNames';
 	import { getApi } from '$lib/ApiContext';
+	import { base } from '$app/paths';
 
 	let { terminals }: { terminals: BcFerries.TerminalCode[] } = $props();
 	let api = getApi();
@@ -18,7 +19,7 @@
 <ul>
 	{#each terminals.sort() as terminal (terminal)}
 		<li>
-			<LinkAsButton href={`/${get_href(terminal)}`}>
+			<LinkAsButton href={`${base}/${get_href(terminal)}`}>
 				<span class="terminal-pill">
 					{terminal}
 				</span>

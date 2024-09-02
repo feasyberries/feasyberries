@@ -5,6 +5,7 @@
 	import TextIcon from './icons/TextIcon.svelte';
 	import { getApi } from '$lib/ApiContext';
 	import ThemeSwitch from './ThemeSwitch.svelte';
+	import { base } from '$app/paths';
 
 	let api = getApi();
 </script>
@@ -14,7 +15,7 @@
 {/snippet}
 
 <header class:throb={api.state === 'fetching'}>
-	<a href="/">
+	<a href="{base}/">
 		<h1>
 			<span class="feasy">Feasy</span>
 			<span class="berries">Berries</span>

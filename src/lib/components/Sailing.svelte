@@ -10,6 +10,7 @@
 	import { timeHasPassed } from '$lib/timeStuff';
 	import { getApi } from '$lib/ApiContext';
 	import WakeLock from './WakeLock.svelte';
+	import { base } from '$app/paths';
 
 	let {
 		sailing,
@@ -37,7 +38,7 @@
 		}
 	});
 
-	let zoom_href = `/${api.selected_route_code}/${index}`;
+	let zoom_href = `${base}/${api.selected_route_code}/${index}`;
 </script>
 
 {#snippet sailing_future(sailing: BcFerries.SailingsEntity)}

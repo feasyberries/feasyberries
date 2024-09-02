@@ -14,7 +14,8 @@
 		--pico-border-color: var(--pico-primary-border);
 		--pico-color: var(--pico-primary-inverse);
 		--pico-box-shadow: var(--pico-button-box-shadow, 0 0 0 rgba(0, 0, 0, 0));
-		padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+		padding: var(--pico-form-element-spacing-vertical)
+			var(--pico-form-element-spacing-horizontal);
 		border: var(--pico-border-width) solid var(--pico-border-color);
 		border-radius: var(--pico-border-radius);
 		outline: 0;

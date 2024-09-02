@@ -43,6 +43,7 @@
 		color: var(--pico-primary-inverse);
 		padding-left: 2rem;
 		padding-right: 2rem;
+		z-index: 2;
 	}
 	h3 {
 		color: var(--pico-primary-inverse);

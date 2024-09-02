@@ -25,11 +25,14 @@
 	);
 
 	function update_now() {
+		console.log('update now', Math.random());
 		now = Date.now();
 	}
 
 	function clear_interval() {
+		console.log('attempt to clear interval');
 		if (interval_id) {
+			console.log('interval_id exists, clearing');
 			clearInterval(interval_id);
 			interval_id = undefined;
 		}
@@ -42,12 +45,6 @@
 	$effect(() => {
 		interval_id = setInterval(update_now, interval_update_ms);
 		return clear_interval;
-	});
-
-	$effect(() => {
-		if (progress_percent <= 0) {
-			clear_interval();
-		}
 	});
 
 	$effect(() => {

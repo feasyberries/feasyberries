@@ -7,6 +7,12 @@
 
 	$effect(() => {
 		if (browser) {
+			theme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		}
+	});
+
+	$effect(() => {
+		if (browser) {
 			document.documentElement.dataset.theme = theme ? 'dark' : 'light';
 		}
 	});

@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      If you're using pnpm, add this step then change the commands and cache key below to use `pnpm`
+      # If you're using pnpm, add this step then change the commands and cache key below to use `pnpm`
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
